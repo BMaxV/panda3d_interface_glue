@@ -4,6 +4,7 @@ from direct.gui.DirectLabel import DirectLabel
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectEntry import DirectEntry
+from direct.gui.DirectGui import DirectScrolledFrame
 
 from direct.gui.DirectScrolledList import DirectScrolledList
 
@@ -22,7 +23,7 @@ import random
 #from panda3d.core import render2d
 #from direct.gui.DirectGui import render2d
 
-import drag_main
+from panda_interface_glue import drag_main
 
 def draw_shape_2d(shape=None):
     if shape==None:
@@ -683,14 +684,42 @@ def trade_strip(real_f,interface_object,drag_items,prefix_self,prefix_other,*arg
 
 def create_text_entry(position,
                         scale,
-                        disable_keyboard_inputs,
-                        enable_keyboard_inputs):
+                        focusInCommand=None,
+                        focusOutCommand=None,
+                        command=None):
+                            
+    # that's not saving any work so far...
+    # maybe  
     E=DirectEntry(pos=position,
                     scale=scale,
-                    focusInCommand=disable_keyboard_inputs,
-                    focusOutCommand=enable_keyboard_inputs,
+                    focusInCommand=focusInCommand,
+                    focusOutCommand=focusOutCommand,
+                    command=command
                     )
     return E
+
+def package_my_table(my_table,element_size=1):
+    xs=len(my_table[0])/2
+    ys=len(my_table)
+    xfac=0.4*(element_size)
+    yfac=0.2
+    canvasSize1=(-0.2, xs*xfac, -ys*yfac, 0.2)
+    
+    myframe = DirectScrolledFrame(canvasSize=canvasSize1, frameSize=(-.8, .8, 0, .8))
+    myframe.setPos(0, 0, 0)
+    canvas=myframe.getCanvas()
+    elements=[myframe]
+    posscale=0.2
+    y=0
+    for row in my_table:
+        x=0
+        for element in row:
+            el=create_textline(str(x)+str(y),(posscale*x*element_size,0,-posscale*y))
+            elements.append(el)
+            el.reparentTo(canvas)
+            x+=1
+        y+=1
+    return elements
 
 def create_button(text,position,scale,function, arguments,text_may_change=0,frame_size=(-4.5,4.5,-0.75,0.75)):
     

@@ -18,6 +18,6 @@ setup(
     license = "MIT",
     keywords = "panda3d",
    
-    packages=['src'],#foldername
+    packages=['panda_interface_glue'],#foldername
     
 )

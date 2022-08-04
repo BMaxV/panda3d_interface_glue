@@ -16,6 +16,9 @@ is picked up or dropped
 update is a task that runs continously and updates the position of the dragged
 object
 
+Output has to be copied from a .output variable of the grid.
+to see if things have changed.
+
 '''
 
 import random
