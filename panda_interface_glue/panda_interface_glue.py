@@ -714,7 +714,7 @@ def package_my_table(my_table,element_size=1):
     for row in my_table:
         x=0
         for element in row:
-            el=create_textline(str(x)+str(y),(posscale*x*element_size,0,-posscale*y))
+            el=create_textline(element,(posscale*x*element_size,0,-posscale*y))
             elements.append(el)
             el.reparentTo(canvas)
             x+=1
