@@ -25,6 +25,11 @@ import random
 
 from panda_interface_glue import drag_main
 
+
+def flip_yz(vector):
+    new_vector=vector[0],vector[2],vector[1]
+    return new_vector
+
 def draw_shape_2d(shape=None):
     if shape==None:
         shape=()
@@ -698,15 +703,29 @@ def create_text_entry(position,
                     )
     return E
 
-def package_my_table(my_table,element_size=1):
+def package_my_table(my_table,element_spacing=1,table_pos=(0,0,0)):
+    """
+    ok so, `my_table` is a list of lists of strings that will be converted to
+    labels by default.
+    if you want to support actions on those things,
+    that's first of all difficult because there needs to be 
+    an object where the output of that is being passed to.
+    
+    then it can be defined that an entry in a row should be a button or
+    support right click functionality.
+    
+    """
     xs=len(my_table[0])/2
     ys=len(my_table)
-    xfac=0.4*(element_size)
+    xfac=0.4*(element_spacing)
     yfac=0.2
     canvasSize1=(-0.2, xs*xfac, -ys*yfac, 0.2)
     
     myframe = DirectScrolledFrame(canvasSize=canvasSize1, frameSize=(-.8, .8, 0, .8))
-    myframe.setPos(0, 0, 0)
+    
+    
+    
+    myframe.setPos(table_pos)
     canvas=myframe.getCanvas()
     elements=[myframe]
     posscale=0.2
@@ -714,13 +733,39 @@ def package_my_table(my_table,element_size=1):
     for row in my_table:
         x=0
         for element in row:
-            el=create_textline(element,(posscale*x*element_size,0,-posscale*y))
+                    
+            el=create_textline(str(element),(posscale*x*element_spacing,0,-posscale*y))
             elements.append(el)
             el.reparentTo(canvas)
             x+=1
         y+=1
+        
+    # I kind of want another frame that's also being controlled by the same 
+    # horizontal scroll bar but doesn't get scrolled out of view.
+    canvasSize2=(-0.2, xfac, 0, 0)
+    myframe2 = DirectScrolledFrame(canvasSize=canvasSize1, frameSize=(-.8, .8, 0, 0.2))
+    myframe2.setPos((0,0,0.6))
+    myframe2.horizontalScroll.destroy()
+    myframe2.verticalScroll.destroy()
+    myframe2.guiItem.setHorizontalSlider(myframe.horizontalScroll.guiItem)
+    
+    canvas=myframe2.getCanvas()
+    headers=["a","b","c"]   
+    myheaders=[]
+    x=0
+    y=0
+    for element in headers:
+         el=create_textline(str(element),(posscale*x*element_spacing,0,0.1))
+         myheaders.append(el)
+         el.reparentTo(canvas)
+         x+=1
+    
+    
+    elements+=myheaders
+    
+    
     return elements
-
+    
 def create_button(text,position,scale,function, arguments,text_may_change=0,frame_size=(-4.5,4.5,-0.75,0.75)):
     
     position=LVector3(*position)
@@ -759,8 +804,8 @@ def create_onscreentext(text="default",pos=(0.5,-0.5),align="right"):
     return o
 
 def create_textline(text,position=(0.0,0.0,-0.6)):
-    tooltip=DirectLabel(text=text,pos=position,scale=(0.1,0.1,0.1),textMayChange=1)
-    return tooltip
+    line=DirectLabel(text=text,pos=position,scale=(0.1,0.1,0.1),textMayChange=1)
+    return line
 
 def create_charge_bar(position=(0.0,0.0,0.5)):
     #like a tooltip, but scale it?
@@ -808,7 +853,7 @@ def end_key_listening(*inputs):
 def rebind(eventname,function):
     base.accept(eventname,function)
 
-def key_event_listening():
+def key_event_listening(base):
     #from the manual:
     #https://www.panda3d.org/manual/index.php/Keyboard_Support
     
