@@ -26,7 +26,8 @@ import random
 from panda3d.core import *
 from direct.gui.DirectGui import *
 from direct.showbase import ShowBase
-
+from direct.showbase.MessengerGlobal import messenger
+        
 colors = {"red": (0.8, 0.2, 0.2, 1.0), "light_red": (1, 0.5, 0.5, 1.0),
               "green": (0.2, 0.8, 0.2, 1.0), "light_green": (0.5, 1, 0.5, 1.0),
               "blue": (0.2, 0.2, 0.8, 1.0), "light_blue": (0.5, 0.5, 1, 1.0),
@@ -36,7 +37,13 @@ color_l = ["red", "green", "blue"]
 
 
 class Grid:
-    """just a utility function to build a grid quickly."""
+    """utility class to build a grid quickly.
+    
+    when using multiple grids, grid_key_prefix is can be used, to
+    differentiate different sets of grids in the same drag controller
+    keys are then formed like this:
+    'key=grid_key_prefix + str((x_i,y_i))'
+    """
 
     def __init__(self, pos, offset, rows_collums=(3, 3), frame_kwargs={},default=True,grid_key_prefix="",owner=None):
         
@@ -195,6 +202,8 @@ def construct_draggable(abstract_container,
         
     elif "text" in dir(represented_item):
         text=represented_item.text
+    else:
+        text=str(represented_item)
         
     T=OnscreenText(text=text, 
                     scale=15,
@@ -257,14 +266,15 @@ def construct_frame(pos,
                     color=(1, 1, 1, 1.0),
                     drag_drop_type=None,
                     key=None,
-                    owner=None):
+                    owner=None,
+                    ):
     #color=(
        # 1, 1, 1, 1.0),
        
     kwargs = {"frameColor": color,
               "frameSize": _rec2d(*size),
               "state": DGG.NORMAL,
-              "parent": pixel2d,
+              "parent": pixel2d, #aspect2d
               #"sortOrder":1,
               }
     
@@ -361,6 +371,7 @@ class App:
         
         bind_grid_events(self.DC.grid.d,self.DC.hover_in,self.DC.hover_out)
         Ds=make_drag_items(self,3)
+        
         c=0
         m=len(Ds)
         for d in Ds:
@@ -368,7 +379,8 @@ class App:
             #key is where it is supposed to go.
             lock(d,self.DC.default_grid.d,self.DC.drag_items,key)
             c+=1
-       
+            
+        print(messenger)
         
 class Drag_Container:
     """container object for the various that are necessary,
@@ -389,8 +401,11 @@ class Drag_Container:
     
     "snap" moves the drag_item-frame to the grid-frame's position
     
+    drop callback will be called once an item has been dropped anywhere
+    to enable you to do something custom on that event.
+    
     """
-    def __init__(self):
+    def __init__(self,drop_callback=None):
         # helper attributes
 
         self.current_dragged = None
@@ -406,6 +421,8 @@ class Drag_Container:
         self.output_info=[]
         self.ignore_ownership=False
         self.drop_option=None
+        
+        self.drop_callback=drop_callback
     
     def next_free_key(self):
         xl=self.grid.d.keys()
@@ -566,7 +583,11 @@ class Drag_Container:
             self.current_dragged.key=new_key
             
             self.current_dragged = None
-
+        
+        
+        if self.drop_callback!=None:
+            self.drop_callback()
+        
 def bind_grid_events(grid,hover_in,hover_out):
     """bind hover and hover out functions to all elements in the grid"""
     

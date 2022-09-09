@@ -30,9 +30,7 @@ def flip_yz(vector):
     new_vector=vector[0],vector[2],vector[1]
     return new_vector
 
-def draw_shape_2d(shape=None):
-    if shape==None:
-        shape=()
+def draw_2d_line(p1,p2,color=(255,255,0)):
     
     
     #prepare new interface object container
@@ -47,15 +45,13 @@ def draw_shape_2d(shape=None):
     poly = Geom(vdata)
     ci=0
 
-
-    p1=[-0.8, 0, 0.5]
-    
-    p2=[-0.5, 0, 0.5]
+    #p1=[-0.8, 0, 0.5]
+    #p2=[-0.5, 0, 0.5]
         
     verts=[p1,p2]
     
     for p in verts:
-        color_t=(255,255,0)
+        #color_t=(255,255,0)
         vertex.addData3(p[0],p[1],p[2])
         uv.addData2(p[0],p[1])
     
@@ -466,107 +462,6 @@ def build_buildmenu(options):
 
     return d
 
-def build_inventory_ui(inventory={}):
-    print("build invent\n\n")
-    #ok so this is the main container that defines the functions.
-    DC=drag_main.Drag_Container()
-    
-    #now to define some "slots"...
-    #pos in pixel, left to right
-    x_base = 50
-    
-    grid = drag_main.Grid((x_base-30,230),(60,60),frame_kwargs={"drag_drop_type":None},rows_collums=(4,5))#,"color":drag_main.colors["light_red"]})
-    
-    DC.grid = grid.d
-        
-    #snap target frames
-    DC.grid["main hand"]= drag_main.construct_frame(**{"pos":(x_base,70),"color":drag_main.colors["light_red"]},drag_drop_type="main hand",key="main hand")
-    DC.grid["head"]     = drag_main.construct_frame(**{"pos":(x_base+60,30),"color":drag_main.colors["light_red"]},drag_drop_type="head",key="head")
-    DC.grid["off hand"] = drag_main.construct_frame(**{"pos":(x_base+120,70),"color":drag_main.colors["light_red"]},drag_drop_type="weapon",key="off hand")
-    DC.grid["chest"]    = drag_main.construct_frame(**{"pos":(x_base+60,90),"color":drag_main.colors["light_blue"]},drag_drop_type="chest",key="chest")
-    DC.grid["feet"]     = drag_main.construct_frame(**{"pos":(x_base+60,150),"color":drag_main.colors["light_red"]},drag_drop_type="feet",key="feet")
-        
-    drag_main.bind_grid_events(DC.grid,DC.hover_in,DC.hover_out)
-    
-    #ok what do I want/need
-    #I want to create the item,
-    #I want to assign it to a valid grid tile and snap to that
-    #tile
-    #and apparently I want to be able to specify
-    #both grid and tile, and not just container.:
-    
-    l=list(DC.grid.keys())
-    l.sort()
-    
-    tps=[]
-    for item in inventory:
-        detail_dict = inventory[item]
-        
-        position = detail_dict["position_key"]
-        amount = detail_dict["amount"]
-        if position == None:
-            tps.append(("bag",item,amount))
-        else:
-            tps.append((position,item))
-    
-    for tup in tps:
-        if len(tup)==3:
-            position,item,amount = tup
-        else:
-            position,item = tup
-            amount=1
-            
-        if position == "bag":
-            
-            #location keys are in l
-            for lkey in l:
-                if lkey not in DC.drag_items:
-                    if "item_slot_type" in dir(item):
-                        drag_type=item.item_slot_type
-                        col="red"
-                        
-                    else:
-                        drag_type=None
-                        col="green"
-                    key=lkey
-                    break
-                    
-        else:
-            key = position
-             
-        if item == None:
-            continue
-        
-        grid = DC.grid
-        
-        if "item_slot_type" in dir(item):
-            drag_type = item.item_slot_type
-            col = "red"
-        else:
-            col = "green"
-            drag_type = None
-        
-        print("draggable inputs",drag_type,col,item,amount)
-        
-        D = drag_main.construct_draggable(DC,drag_type=drag_type,
-                            rel_col=drag_main.colors[col],
-                            represented_item=item)
-        
-                                    
-        drag_items = DC.drag_items
-        print("lock inputs",D,grid,drag_items,key)
-        drag_main.lock(D,grid,drag_items,key)#position
-        
-        #hier funktioniert das auch.
-        
-        #ok so I need to get the drop information to the interface somehow.
-        #I could od it with a message and the task manager...
-        
-        #Or I can save it in the object and retrieve it later...
-        #the later would probably be more modular.
-        #let's try that first.
-    
-    return DC
 
 def create_contents(the_dict,key_string_prefix,DC,grid,color=drag_main.colors["red"]):
     for item in the_dict:
@@ -702,8 +597,10 @@ def create_text_entry(position,
                     command=command
                     )
     return E
+    
 
-def package_my_table(my_table,element_spacing=1,table_pos=(0,0,0)):
+    
+def package_my_table(b,my_table,element_spacing=1,table_pos=(0,0,0)):
     """
     ok so, `my_table` is a list of lists of strings that will be converted to
     labels by default.
@@ -743,11 +640,16 @@ def package_my_table(my_table,element_spacing=1,table_pos=(0,0,0)):
     # I kind of want another frame that's also being controlled by the same 
     # horizontal scroll bar but doesn't get scrolled out of view.
     canvasSize2=(-0.2, xfac, 0, 0)
-    myframe2 = DirectScrolledFrame(canvasSize=canvasSize1, frameSize=(-.8, .8, 0, 0.2))
+    b.frame1=myframe
+    myframe2 = DirectScrolledFrame(canvasSize=canvasSize1, frameSize=(-.8, .8, 0, 0.2), horizontalScroll_command = b.controlOtherFrame)
+    b.frame2=myframe2
+    #myframe2["horizontalScroll_arguments"]=(myframe,myframe2)
     myframe2.setPos((0,0,0.6))
+    
+    
     myframe2.horizontalScroll.destroy()
-    myframe2.verticalScroll.destroy()
-    myframe2.guiItem.setHorizontalSlider(myframe.horizontalScroll.guiItem)
+    #myframe2.verticalScroll.destroy()
+    #myframe2.guiItem.setHorizontalSlider(myframe.horizontalScroll.guiItem)
     
     canvas=myframe2.getCanvas()
     headers=["a","b","c"]   
@@ -764,7 +666,7 @@ def package_my_table(my_table,element_spacing=1,table_pos=(0,0,0)):
     elements+=myheaders
     
     
-    return elements
+    return elements , myframe2
     
 def create_button(text,position,scale,function, arguments,text_may_change=0,frame_size=(-4.5,4.5,-0.75,0.75)):
     
@@ -791,20 +693,20 @@ def create_log_scroll_list():
     o=DirectScrolledList(pos=LVector3(0.5,-0.55),scale=(0.1,0.1,0.1))
     return o
 
-def create_onscreentext(text="default",pos=(0.5,-0.5),align="right"):
+def create_onscreentext(text="default",pos=(0.5,-0.5),align="right",scale=0.07):
     if align=="right":
         align=TextNode.ARight
     elif align=="left":
         align=TextNode.ALeft
     else:
         raise TypeError
-    o=OnscreenText(text=text, scale=.07,
+    o=OnscreenText(text=text, scale=scale,
     align=align, pos=pos,
     fg=(1, 1, 1, 1), shadow=(0, 0, 0, 0.5))
     return o
 
-def create_textline(text,position=(0.0,0.0,-0.6)):
-    line=DirectLabel(text=text,pos=position,scale=(0.1,0.1,0.1),textMayChange=1)
+def create_textline(text,position=(0.0,0.0,-0.6),scale=(0.05,0.05,0.05)):
+    line=DirectLabel(text=text,pos=position,scale=scale,textMayChange=1)
     return line
 
 def create_charge_bar(position=(0.0,0.0,0.5)):
@@ -818,6 +720,32 @@ def create_charge_bar(position=(0.0,0.0,0.5)):
     charge_bar.setValue()
     
     return charge_bar
+
+def make_bars(bars=None,test=False,position=None,scale=None,bar_colors=None):
+        
+    if position==None:
+        position=(0,0,0)
+        
+    if bars==None and test==True:
+        bars={"hunger":0.1,"life":0.9,"mana":0.5,"endurance":0.4}
+        bar_colors={"life":(255,0,0,1),"mana":(0,0,255,1),"endurance":(0,255,0,1),"hunger":(255,255,0,1)}
+        
+    bar_dict={}
+    bar_list=[]
+    
+    if bars !=None:
+        c=0
+        for x in bars:
+            fp=(position[0],position[1],position[2]+c*0.05)
+            bar=panda_interface_glue.create_charge_bar(fp)
+            bar.setScale(scale)
+            bar["barColor"]=bar_colors[x]
+            bar.setBarColor()
+            bar_dict[x]=bar
+            bar_list.append(bar)
+            c+=1
+            
+    return bar_dict,bar_list
 
 def create_tooltip(text):
     print("creating tooltip?!")
