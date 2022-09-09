@@ -737,7 +737,7 @@ def make_bars(bars=None,test=False,position=None,scale=None,bar_colors=None):
         c=0
         for x in bars:
             fp=(position[0],position[1],position[2]+c*0.05)
-            bar=panda_interface_glue.create_charge_bar(fp)
+            bar=create_charge_bar(fp)
             bar.setScale(scale)
             bar["barColor"]=bar_colors[x]
             bar.setBarColor()
