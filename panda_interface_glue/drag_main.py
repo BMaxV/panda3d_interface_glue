@@ -150,7 +150,11 @@ def destroy_drag_tooltip(parent,*args):
         print("this thing seems to have no tooltip")
     
 def drop_decide(*args,**kwargs):
-    args[0].drop(args[-1])
+    frame=args[1]
+    if frame.drop_this_smooth:
+        args[0].drop_smooth(frame)
+    else:
+        args[0].drop(args[-1])
     
 
 def construct_draggable(abstract_container,
@@ -175,6 +179,8 @@ def construct_draggable(abstract_container,
                             parent=pixel2d,
                             #sortOrder=0,
                             )
+    
+    frame.drop_this_smooth=False
     
     frame.is_draggable=True
     frame.represented_item=represented_item
@@ -339,8 +345,8 @@ class demo_arg_cont:
 
 class App:
     def __init__(self):
-        DirectFrame(pos=(0.5,0.1,0.1),frameSize=(-1,1,-1,1))
-        DirectButton(pos=(0.5,0,0))
+        #DirectFrame(pos=(0.5,0.1,0.1),frameSize=(-1,1,-1,1))
+        #DirectButton(pos=(0.5,0,0))
         # for demonstration purposes:
         # get a few colors as "types"
 
@@ -366,7 +372,6 @@ class App:
         #self.DC.default_grid.setColorOff(0)
         bind_grid_events(self.DC.default_grid.d,self.DC.hover_in,self.DC.hover_out)
         
-        
         self.DC.grid = TargetColoredGrid((32, 32), (64, 64), self.DC.dac.colors)
         
         bind_grid_events(self.DC.grid.d,self.DC.hover_in,self.DC.hover_out)
@@ -379,8 +384,7 @@ class App:
             #key is where it is supposed to go.
             lock(d,self.DC.default_grid.d,self.DC.drag_items,key)
             c+=1
-            
-        print(messenger)
+        
         
 class Drag_Container:
     """container object for the various that are necessary,
@@ -407,7 +411,10 @@ class Drag_Container:
     """
     def __init__(self,drop_callback=None):
         # helper attributes
-
+        
+        self.adjust_existing = False
+        self.current_last_drag_drop_anchor = None
+        
         self.current_dragged = None
         self.last_hover_in = None
         self.current_last_anchor = None
@@ -464,10 +471,28 @@ class Drag_Container:
             if base.mouseWatcherNode.has_mouse():
                 mpos = base.mouseWatcherNode.get_mouse()
                 pos = Point3(mpos.get_x(), 0, mpos.get_y())
-
-                self.current_dragged.set_pos(
-                    pixel2d.get_relative_point(render2d, pos))
-
+                pos = pixel2d.get_relative_point(render2d, pos)
+                self.current_dragged.set_pos(pos)
+                
+                # also, update positions of other elements
+                # depending on this one and if I'm currently hover in one
+                
+                if self.adjust_existing:
+                    if self.last_hover_in!=None:
+                        els=list(self.last_hover_in.sorted_elements)
+                        if self.current_dragged in els:
+                            els.remove(self.current_dragged)
+                        position_on(self.last_hover_in,els)
+                        
+                        parent_pos=self.last_hover_in.get_pos()
+                        
+                        shift_to_make_space(els,parent_pos,pos)
+                    
+                                    
+                                
+                        
+                        
+                
         if task:
             return task.again
 
@@ -484,6 +509,49 @@ class Drag_Container:
         self.current_dragged.w = w
         self.update()
 
+    def drop_smooth(self,frame):
+        """
+        figure out where the dragged element is in relation to other 
+        contained items and insert it at the appropriate position
+        """
+        pos=None
+        if base.mouseWatcherNode.has_mouse():
+            mpos = base.mouseWatcherNode.get_mouse()
+            pos = Point3(mpos.get_x(), 0, mpos.get_y())
+        
+        if pos==None:
+            raise ValueError
+        if self.current_dragged:
+            # if I'm dragging something
+            if self.last_hover_in:
+                # and I'm hovering somewhere.
+                parent_pos=self.last_hover_in.get_pos()
+                pos = pixel2d.get_relative_point(render2d, pos)
+                
+                these=list(self.last_hover_in.sorted_elements)
+                if self.current_dragged in these:
+                    these.remove(self.current_dragged)
+                i=0
+                for x in these:
+                    el_pos=x.get_pos()
+                    val1=el_pos[0]+parent_pos[0]
+                    #print("val1",val1,pos[0])
+                    if val1 > pos[0]:
+                        break
+                    i+=1
+                these.insert(i,self.current_dragged)
+                
+                other_elements = these
+                position_on(self.last_hover_in,other_elements)
+            
+            else:
+                # drop it back into the thing I took it from?
+                these=frame.last_drag_drop_anchor.sorted_elements
+                these.append(self.current_dragged)
+                position_on(frame.last_drag_drop_anchor,these)
+            
+            self.current_dragged=None
+            
     def drop(self, mouse_pos=None):
         '''Drop the currently dragged object on the last object the cursor hovered over'''
         
@@ -597,6 +665,11 @@ def bind_grid_events(grid,hover_in,hover_out):
         ob.bind(DGG.WITHIN , hover_in, [ob])
         ob.bind(DGG.WITHOUT, hover_out)
 
+def bind_single_events(ob,hover_in,hover_out):
+    
+    ob.bind(DGG.WITHIN , hover_in, [ob])
+    ob.bind(DGG.WITHOUT, hover_out)
+
 def snap(ob, target):
 
     # this is just some math for nice centering
@@ -642,7 +715,62 @@ def next_free_key(the_dict,drag_items):
         if tup[1] not in drag_items:
             return tup[1]
         c+=1
+
+def container_surface(pos=(0,0)):
     
-if __name__=="__main__":
+    F = construct_frame(pos=pos,size=(200,50))
+    return F
+
+def shift_to_make_space(els,parent_pos,pos):
+    """weakness at the moment is that this is still
+    done in pixels. same as the rest."""
+    lim = 80 # when things start to get moved
+    move_d = 50 # how far they are moved at most 
+    
+    for x in els:
+        el_pos=x.get_pos()
+        full=parent_pos+el_pos
+        #el_pos = pixel2d.get_relative_point(render2d, el_pos)
+        
+        d=((full[0]-pos[0])**2)**0.5
+        
+        if d < lim:
+            direc = full[0]-pos[0]
+            fac = 1-(d/lim)
+            if direc>0:
+                np_pos = el_pos+(LVecBase3f(*(fac*move_d,0)))
+            else:
+                np_pos = el_pos+(LVecBase3f(*(fac*-move_d,0)))
+        else:
+            np_pos = el_pos
+        
+        x.set_pos(np_pos)
+
+def some_function(elements):
+    max_x=len(elements)
+    x=0
+    my_length=200
+    step_size=my_length/max_x
+    while x < max_x:
+        #15 is from the size of the tile?
+        yield ((0.5+x)*(step_size)-15,0,0)
+        x+=1
+    
+def position_on(big_frame,elements):
+    my_gen=some_function(elements)
+    for x in elements:
+        pos=my_gen.__next__()
+        x.wrt_reparent_to(big_frame)
+        x.last_drag_drop_anchor=big_frame
+        #x.is_draggable=True
+        x.setPos(pos)
+    # ok this is somewhat limiting the things that I want to drop.
+    elements = list(set(elements))
+    big_frame.sorted_elements = elements
+
+def old():
     app = App()
     base.run()
+
+if __name__=="__main__":
+    old()
