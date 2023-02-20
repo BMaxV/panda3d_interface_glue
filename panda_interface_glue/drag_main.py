@@ -23,6 +23,7 @@ to see if things have changed.
 
 import random
 
+from direct.showbase import DirectObject
 from panda3d.core import *
 from direct.gui.DirectGui import *
 from direct.showbase import ShowBase
@@ -184,11 +185,12 @@ def construct_draggable(abstract_container,
     
     frame.is_draggable=True
     frame.represented_item=represented_item
+    frame.amount=amount
     
     frame.setColorOff(1)
     frame.setColor(rel_col)
     # bind the events
-    frame.bind(DGG.B1PRESS, abstract_container.drag, [frame])
+    frame.bind(DGG.B1PRESS, abstract_container.left_mouse_decide, [frame])
     frame.bind(DGG.B1RELEASE, drop_decide, [abstract_container, frame])
     
     h, w = get_local_center(frame)
@@ -369,6 +371,8 @@ class App:
         
         self.DC.default_grid = Grid((64, 300), (64, 64), (4, 1))
         
+        self.DC.my_grids = [self.DC.default_grid,self.DC.grid]
+        
         #self.DC.default_grid.setColorOff(0)
         bind_grid_events(self.DC.default_grid.d,self.DC.hover_in,self.DC.hover_out)
         
@@ -408,6 +412,11 @@ class Drag_Container:
     drop callback will be called once an item has been dropped anywhere
     to enable you to do something custom on that event.
     
+    Stack Splitting REQUIRES a .my_grids list to be defined
+    Since those depend on your use case, I can't do it automatically.
+    Sort of. Or at least I'm too lazy right now.
+    
+    
     """
     def __init__(self,drop_callback=None):
         # helper attributes
@@ -429,7 +438,21 @@ class Drag_Container:
         self.ignore_ownership=False
         self.drop_option=None
         
-        self.drop_callback=drop_callback
+        self.drop_callback = drop_callback
+        
+        self.my_grids=[]
+        self.split_frame=None
+        self.event_handler = DirectObject.DirectObject()
+        
+        self.state = {"ctrl":False,"shift":False}
+        
+        self.event_handler.accept("control",self.set_state,["enter","ctrl"])
+        self.event_handler.accept("shift",self.set_state,["enter","shift"])
+        self.event_handler.accept("control-up",self.set_state,["leave","ctrl"])
+        self.event_handler.accept("shift-up",self.set_state,["leave","shift"])
+        
+        # for more complex interactions
+        self.split_object_collection =[]
     
     def next_free_key(self):
         xl=self.grid.d.keys()
@@ -454,6 +477,114 @@ class Drag_Container:
         '''Clear the target to drop objects onto'''
         self.last_hover_in = None
         self.last_hover_drag_drop_type = None
+        
+    def split_size(self,diff,other):
+        """set my split size with one of the buttons"""
+        self.split_size_max
+        
+        in_range = (0 < self.split_size_counter + diff < self.split_size_max)
+        
+        if in_range:
+            self.split_size_counter+=diff
+            
+        if self.split_object_collection!=[]:
+            text=self.split_object_collection[0]
+            text.enterText(str(self.split_size_counter))
+        
+    def finalize_split(self,cancel=False,other=None):
+        if cancel:
+            self.destroy_split_UI()
+        my_value = None
+        in_range = False
+        if self.split_object_collection!=[]:
+            text=self.split_object_collection[0]
+            my_text=text.get()
+            try:
+                my_value=int(my_text)
+                in_range = (0 < my_value < self.split_size_max)
+            except ValueError:
+                pass
+        
+        
+        if not cancel and my_value != None and in_range:
+            # find an empty slot, actually do that first.
+            # create a new draggable
+            grid=None
+            for grid in self.my_grids:
+                if self.split_frame.key in grid.d:
+                    break
+            print("my grids?",self.my_grids)
+            
+            # go by owner?
+            if grid!=None:
+            
+                key = next_free_key(grid.d,self.drag_items)
+                
+                if key != None:
+                    self.split_frame.amount-=my_value
+                    nf=construct_draggable(self,self.split_frame.represented_item,amount=my_value)
+                    # bind or something
+                    lock(nf,grid.d,self.drag_items,key)
+            else:
+                print("eh? for stack splitting, something needs to be set up where to drop the new stack")        
+                
+            self.destroy_split_UI()
+
+    def destroy_split_UI(self):
+        for x in self.split_object_collection:
+            x.removeNode()
+        self.split_object_collection=[]
+        self.split_frame=None
+        
+    def try_set_counter(self,*args):
+        if self.split_object_collection!=[]:
+            text=self.split_object_collection[0]
+            my_text=text.get()
+            try:
+                my_value=int(my_text)
+                in_range = (0 < my_value < self.split_size_max)
+                self.split_size_counter=my_value
+            except ValueError:
+                pass
+
+    def left_mouse_decide(self,frame,mouse):
+        """
+        sooooooo because of shenanigans, I can't bind an action
+        directly to multiple keys.
+        
+        Instead what I have to do here is to bind this monster
+        to left click, then check what state I have entered before
+        by pressing or releasing or control.
+        
+        
+        
+        """
+        if self.state["shift"]:
+            if frame.amount > 1:
+                
+                # record some things.
+                self.split_frame = frame
+                self.split_size_counter = frame.amount.__floordiv__(2)
+                self.split_size_max = frame.amount
+                
+                # create my number entry things.
+                text_entry = DirectEntry(pos=(0.5,0.3,-0.3),scale=0.05,focusOutCommand=self.try_set_counter,focusOutExtraArgs=tuple())
+                
+                up_b1 = create_button("more",(0.8,0.3,-0.3),0.05,self.split_size,(1,))
+                down_b2 = create_button("less",(0,0.3,-0.3),0.05,self.split_size,(-1,))
+                set_button = create_button("ok",(0,0.4,-0.5),0.05,self.finalize_split,(False,))
+                cancel_button = create_button("cancel",(0.8,0.4,-0.5),0.05,self.finalize_split,(True,))
+                self.split_object_collection = [text_entry, up_b1, down_b2, set_button, cancel_button]                
+        else:
+            #whatever I was doing before?
+            self.drag(frame)
+    
+    def set_state(self,*tup):
+        if tup[0]=="enter":
+            self.state[tup[1]] = True
+        if tup[0]=="leave":
+            self.state[tup[1]] = False
+    
 
     def update(self, task=None):
         '''Track the mouse pos and move self.current_dragged to where the cursor is '''
@@ -745,6 +876,49 @@ def shift_to_make_space(els,parent_pos,pos):
             np_pos = el_pos
         
         x.set_pos(np_pos)
+
+def create_button(text,position,scale,function, arguments,text_may_change=0,frame_size=(-4.5,4.5,-0.75,0.75)):
+    
+    position=LVector3(*position)
+    button = DirectButton(text=text,
+                    pos=position,
+                    scale=scale,
+                    frameSize=frame_size,
+                    textMayChange=text_may_change)#(.9, 0, .75), text="Open"))
+                                   #scale=.1, pad=(.2, .2),
+                                   #rolloverSound=None, clickSound=None,
+                                   #command=self.toggleMusicBox)
+    position[0]+=0.1
+    
+    button.setPos(*position)
+    
+    if function!=None and arguments!=None:
+        arguments=list(arguments)
+        button.bind(DGG.B1PRESS,function,arguments)
+        
+    return button
+
+
+def create_contents(my_list,DC,grid,color=colors["red"]):
+    """
+    for elements in a list, create draggable items
+    that represent those items and bind them to 
+    available sockets?
+    """
+    for item in my_list:
+        D = construct_draggable(DC,
+                            drag_type = None,
+                            represented_item = str(item),
+                            rel_col = color,
+                            )
+        drag_items = DC.drag_items
+        key = next_free_key(grid,DC.drag_items)
+        lock(D,grid,drag_items,key)
+
+def get_prefix_from_grid_key(x):
+    index = x.find("(")
+    prefix = x[:index]
+    return prefix
 
 def some_function(elements):
     max_x=len(elements)
