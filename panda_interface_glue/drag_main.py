@@ -343,53 +343,7 @@ class demo_arg_cont:
               "white": (1, 1, 1, 1.0), "black": (0, 0, 0, 1.0)}
     
     color_l = ["red", "green", "blue"]
-
-
-class App:
-    def __init__(self):
-        #DirectFrame(pos=(0.5,0.1,0.1),frameSize=(-1,1,-1,1))
-        #DirectButton(pos=(0.5,0,0))
-        # for demonstration purposes:
-        # get a few colors as "types"
-
-        # red green blue white black
-        # only provide red green blue cubes
-        
-
-        # add a title/instructions
-        wp = WindowProperties.getDefault()
-        wp.set_title("Drag & Drop the colored squares")
-        WindowProperties.setDefault(wp)
-        # init showvase
-        base = ShowBase.ShowBase()
-        
-        self.DC=Drag_Container()
-        self.DC.dac=demo_arg_cont()
-        
-        
-        #this is the grid where the draggables are supposed to be at the start.
-        
-        self.DC.default_grid = Grid((64, 300), (64, 64), (4, 1))
-        
-        self.DC.my_grids = [self.DC.default_grid,self.DC.grid]
-        
-        #self.DC.default_grid.setColorOff(0)
-        bind_grid_events(self.DC.default_grid.d,self.DC.hover_in,self.DC.hover_out)
-        
-        self.DC.grid = TargetColoredGrid((32, 32), (64, 64), self.DC.dac.colors)
-        
-        bind_grid_events(self.DC.grid.d,self.DC.hover_in,self.DC.hover_out)
-        Ds=make_drag_items(self,3)
-        
-        c=0
-        m=len(Ds)
-        for d in Ds:
-            key=str((c,0))
-            #key is where it is supposed to go.
-            lock(d,self.DC.default_grid.d,self.DC.drag_items,key)
-            c+=1
-        
-        
+     
 class Drag_Container:
     """container object for the various that are necessary,
     keeping track of which object is being dragged,
@@ -513,7 +467,6 @@ class Drag_Container:
             for grid in self.my_grids:
                 if self.split_frame.key in grid.d:
                     break
-            print("my grids?",self.my_grids)
             
             # go by owner?
             if grid!=None:
@@ -666,7 +619,6 @@ class Drag_Container:
                 for x in these:
                     el_pos=x.get_pos()
                     val1=el_pos[0]+parent_pos[0]
-                    #print("val1",val1,pos[0])
                     if val1 > pos[0]:
                         break
                     i+=1
@@ -776,8 +728,7 @@ class Drag_Container:
                     self.output_info.append((other,self.grid[old_key]))
             
             snap(self.current_dragged, snap_target)
-            print("snaptkey",snap_target.key)
-            print("snapt",snap_target)
+            
             self.drag_items[snap_target.key]=self.current_dragged
             self.current_dragged.key=new_key
             
@@ -941,10 +892,3 @@ def position_on(big_frame,elements):
     # ok this is somewhat limiting the things that I want to drop.
     elements = list(set(elements))
     big_frame.sorted_elements = elements
-
-def old():
-    app = App()
-    base.run()
-
-if __name__=="__main__":
-    old()
