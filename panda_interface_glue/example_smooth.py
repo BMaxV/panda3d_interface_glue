@@ -34,12 +34,12 @@ class App2:
         self.F2.sorted_elements=[]
         self.F.sorted_elements=[]
         
-        drag_main.position_on(self.F,l)
+        drag_main.position_on(self.DC,self.F,l)
         
         drag_main.bind_single_events(self.F,self.DC.hover_in,self.DC.hover_out)
         drag_main.bind_single_events(self.F2,self.DC.hover_in,self.DC.hover_out)
         
-        self.DC.drag_items=l
+        
         
 def new():
     app = App2()

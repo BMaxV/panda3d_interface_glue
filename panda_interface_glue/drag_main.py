@@ -150,12 +150,20 @@ def destroy_drag_tooltip(parent,*args):
     else:
         print("this thing seems to have no tooltip")
     
-def drop_decide(*args,**kwargs):
-    frame=args[1]
-    if frame.drop_this_smooth:
-        args[0].drop_smooth(frame)
+def drop_decide(DC,frame,*args,**kwargs):
+    
+    drop_this_smooth = False
+    if DC.last_hover_in != None:
+        if "sorted_elements" in dir(DC.last_hover_in):
+            drop_this_smooth = True
+    
+    if "sorted_elements" in dir(DC.current_dragged.last_drag_drop_anchor):
+        drop_this_smooth = True
+    
+    if drop_this_smooth:
+        DC.drop_smooth(frame)
     else:
-        args[0].drop(args[-1])
+        DC.drop(frame)
     
 
 def construct_draggable(abstract_container,
@@ -181,6 +189,7 @@ def construct_draggable(abstract_container,
                             #sortOrder=0,
                             )
     
+    frame.key=None
     frame.drop_this_smooth=False
     
     frame.is_draggable=True
@@ -562,21 +571,16 @@ class Drag_Container:
                 # depending on this one and if I'm currently hover in one
                 
                 if self.adjust_existing:
-                    if self.last_hover_in!=None:
+                    if self.last_hover_in!=None and "sorted_elements" in dir(self.last_hover_in):
                         els=list(self.last_hover_in.sorted_elements)
                         if self.current_dragged in els:
                             els.remove(self.current_dragged)
-                        position_on(self.last_hover_in,els)
+                        position_on(self,self.last_hover_in,els)
                         
                         parent_pos=self.last_hover_in.get_pos()
                         
                         shift_to_make_space(els,parent_pos,pos)
-                    
-                                    
-                                
-                        
-                        
-                
+        
         if task:
             return task.again
 
@@ -584,7 +588,10 @@ class Drag_Container:
         '''Set the widget to be the currently dragged object'''
 
         self.current_last_drag_drop_anchor = widget.last_drag_drop_anchor
-
+        
+        if "sorted_elements" in dir(widget.last_drag_drop_anchor):
+            widget.old_order=list(widget.last_drag_drop_anchor.sorted_elements)
+            
         h, w = get_local_center(widget)
 
         widget.reparent_to(pixel2d)
@@ -598,7 +605,7 @@ class Drag_Container:
         figure out where the dragged element is in relation to other 
         contained items and insert it at the appropriate position
         """
-        pos=None
+        pos = None
         if base.mouseWatcherNode.has_mouse():
             mpos = base.mouseWatcherNode.get_mouse()
             pos = Point3(mpos.get_x(), 0, mpos.get_y())
@@ -625,13 +632,20 @@ class Drag_Container:
                 these.insert(i,self.current_dragged)
                 
                 other_elements = these
-                position_on(self.last_hover_in,other_elements)
-            
+                position_on(self,self.last_hover_in,other_elements)
+                
+                self.drag_items[self.last_hover_in.key]=self.current_dragged
+                self.current_dragged.key=self.last_hover_in.key
+                
             else:
                 # drop it back into the thing I took it from?
-                these=frame.last_drag_drop_anchor.sorted_elements
-                these.append(self.current_dragged)
-                position_on(frame.last_drag_drop_anchor,these)
+                
+                if "old_order" in dir(self.current_dragged):
+                    these = self.current_dragged.old_order
+                else:
+                    these = frame.last_drag_drop_anchor.sorted_elements
+                    these.append(self.current_dragged)
+                position_on(self,frame.last_drag_drop_anchor,these)
             
             self.current_dragged=None
             
@@ -798,16 +812,36 @@ def next_free_key(the_dict,drag_items):
             return tup[1]
         c+=1
 
-def container_surface(pos=(0,0)):
+def container_surface(pos=(0,0),grid_key_prefix="this",grid_key="(smooth)"):
     
     F = construct_frame(pos=pos,size=(200,50))
+    F.key=grid_key_prefix+grid_key
     return F
 
 def shift_to_make_space(els,parent_pos,pos):
     """weakness at the moment is that this is still
     done in pixels. same as the rest."""
+    
+    
+    # when these get too big, it will disturb how the positioning 
+    # is done with position_on and it will change the order
+    # in unintended ways, because picking it up will shift the position
+    # so much it will change the order. So just picking up and letting
+    # go, can alter stuff.
+    
+    # e.g. pick up first of 4 elements. pick one up, it's now 3 elements.
+    # 3 elements get resorted, picked up element will move slightly to the
+    # right and now longer be first
+    # if dropped immediately it will be inserted as second.
+    
+    # how to solve this... I would have to keep the old order around
+    # for position_on
+    # and not drastically resort, until my actually moved distance is 
+    # so much I need to move things. Or I don't move things when I pick them up.
+    # at least not on the x axis. 
+    
     lim = 80 # when things start to get moved
-    move_d = 50 # how far they are moved at most 
+    move_d = 20 # how far they are moved at most 
     
     for x in els:
         el_pos=x.get_pos()
@@ -881,7 +915,7 @@ def some_function(elements):
         yield ((0.5+x)*(step_size)-15,0,0)
         x+=1
     
-def position_on(big_frame,elements):
+def position_on(drag_controller,big_frame,elements):
     my_gen=some_function(elements)
     for x in elements:
         pos=my_gen.__next__()
@@ -890,5 +924,21 @@ def position_on(big_frame,elements):
         #x.is_draggable=True
         x.setPos(pos)
     # ok this is somewhat limiting the things that I want to drop.
-    elements = list(set(elements))
+    new_elements = list(set(elements))
+    assert len(new_elements)==len(elements)
+    #elements.sort(key = lambda x : x.getPos()[0])
     big_frame.sorted_elements = elements
+    
+    # this is necessary for compatibility with the other system
+    # that one binds to a position in that grid, 
+    # grid(position)
+    # this one doesn't have a "grid" so I'm doing 
+    # bigframe.key(index)
+    
+    for i in elements:
+        ind = elements.index(i)
+        if i.key !=None and i.key in drag_controller.drag_items:
+            drag_controller.drag_items.pop(i.key)
+        my_new_key=big_frame.key+"("+str(ind)+")"
+        drag_controller.drag_items[my_new_key]=i
+        i.key=my_new_key
