@@ -153,12 +153,15 @@ def destroy_drag_tooltip(parent,*args):
 def drop_decide(DC,frame,*args,**kwargs):
     
     drop_this_smooth = False
-    if DC.last_hover_in != None:
+    
+    if DC.last_hover_in == None:
+        if "sorted_elements" in dir(DC.current_dragged.last_drag_drop_anchor):
+            drop_this_smooth = True
+    else: 
         if "sorted_elements" in dir(DC.last_hover_in):
             drop_this_smooth = True
     
-    if "sorted_elements" in dir(DC.current_dragged.last_drag_drop_anchor):
-        drop_this_smooth = True
+    
     
     if drop_this_smooth:
         DC.drop_smooth(frame)

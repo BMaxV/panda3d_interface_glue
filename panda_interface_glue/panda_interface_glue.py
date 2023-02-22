@@ -705,6 +705,60 @@ def create_onscreentext(text="default",pos=(0.5,-0.5),align="right",scale=0.07):
     fg=(1, 1, 1, 1), shadow=(0, 0, 0, 0.5))
     return o
 
+
+class EntrySearch:
+    """
+    awysiwyg
+    except the object that holds/controls this, needs to
+    define an event handler and 
+    register some function that *calls* the 'get' function and does
+    something with the result.
+    
+    event_handler = DirectObject.DirectObject()
+    event_handler.accept("enter",use_get_and_result)
+    
+    """
+    def __init__(self,values):
+        self.values=values
+        self.mysearch_input=DirectEntry(pos=(0,0,0.3),scale=0.07,focus=0)
+        
+    def removeNode(self):
+        self.mysearch_input.removeNode()
+        
+    def get(self):
+        my_text=self.mysearch_input.get()
+        
+        for x in self.values:
+            if my_text in x:
+                self.mysearch_input.setText("")
+                break
+            else:
+                x = None
+        
+        return x
+
+def amount_setter(big_container,big_container_cycle_function,display_amount,scale):
+    """ok, so the problem with this thing, is that it makes some assumptions about 
+    where it's used.
+    
+    There needs to be an "owner" object,
+    it needs to have a cycle function that handles the button presses.
+    and it needs to save the amount number that also should be passed
+    in here..
+    """
+    amount_ob = create_textline(
+        "amount:"+str(display_amount), (0.0, 0.0, -0.5))
+    
+    a_up = create_button(
+        "up", (0.6, 0.0, -0.5), scale, 
+        big_container_cycle_function, ("amount", "main", "up"))
+        
+    a_down = create_button(
+        "down", (-0.6, 0.0, -0.5), scale,
+         big_container_cycle_function, ("amount", "main", "down"))
+    elements = [amount_ob, a_up, a_down]
+    return  elements
+
 def create_textline(text,position=(0.0,0.0,-0.6),scale=(0.05,0.05,0.05)):
     line=DirectLabel(text=text,pos=position,scale=scale,textMayChange=1)
     return line
