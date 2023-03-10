@@ -706,6 +706,75 @@ def create_onscreentext(text="default",pos=(0.5,-0.5),align="right",scale=0.07):
     return o
 
 
+            
+class CyclingList:
+    def __init__(self,variable_name,values,base_position):
+       
+        self.variable_name = variable_name
+        self.values = values # if "numbers" change behavior?
+        self.current_index = 0
+        self.base_position = base_position
+        self.build(base_position)
+        
+        self.elements = []
+    
+    def cycle(self,direction,*args):
+        if direction=="up":
+            self.current_index+=1
+        else:
+            self.current_index-=1
+        
+        if self.current_index<=-1:
+            self.current_index=len(self.values)-1
+        if self.current_index>=len(self.values):
+            self.current_index=0
+        
+        self.clean()
+        self.build(self.base_position)
+        
+    def clean(self):
+        for x in self.elements:
+            x.removeNode()
+    
+    def get_value(self):
+        return self.values[self.current_index]
+    
+    def build(self,base_position):
+        
+        scale = (0.05, 0.05, 0.05)
+        x,y,z=base_position
+        display_variable_name = create_textline(
+            self.variable_name , (x-0.3, 0.0, z))
+        
+        variable_value = self.values[self.current_index]
+        
+        # this could be search box too.
+        # or accept e.g. number values.
+        # hm. I think I already built both.
+        
+        display_variable_value = create_textline(
+            variable_value, (x, 0.0, z))
+        
+        up_button = create_button(
+            "up", (x+0.3, 0.0, z+0.05), scale,
+             self.cycle, ("up",),frame_size = (-1.5,1.5,-0.75,0.75)
+             )
+        down_button = create_button(
+            "down",(x+0.3, 0.0, z-0.05), scale,
+            self.cycle, ("down",),frame_size = (-1.5,1.5,-0.75,0.75)
+            )
+        
+        self.elements=[
+        display_variable_name,
+        display_variable_value,
+        up_button,
+        down_button]
+    
+    def removeNode(self):
+        for x in self.elements:
+            x.removeNode()
+
+
 class EntrySearch:
     """
     awysiwyg
@@ -718,9 +787,9 @@ class EntrySearch:
     event_handler.accept("enter",use_get_and_result)
     
     """
-    def __init__(self,values):
+    def __init__(self,values,pos=(0,0,0.3),scale=0.07,):
         self.values=values
-        self.mysearch_input=DirectEntry(pos=(0,0,0.3),scale=0.07,focus=0)
+        self.mysearch_input=DirectEntry(pos=pos,scale=scale,focus=0)
         
     def removeNode(self):
         self.mysearch_input.removeNode()
@@ -737,7 +806,7 @@ class EntrySearch:
         
         return x
 
-def amount_setter(big_container,big_container_cycle_function,display_amount,scale):
+def amount_setter(big_container,big_container_cycle_function,display_amount,base_position,scale,cycle_args_up=("amount", "main", "up"),cycle_args_down=("amount", "main", "down")):
     """ok, so the problem with this thing, is that it makes some assumptions about 
     where it's used.
     
@@ -746,22 +815,58 @@ def amount_setter(big_container,big_container_cycle_function,display_amount,scal
     and it needs to save the amount number that also should be passed
     in here..
     """
-    amount_ob = create_textline(
-        "amount:"+str(display_amount), (0.0, 0.0, -0.5))
     
-    a_up = create_button(
-        "up", (0.6, 0.0, -0.5), scale, 
-        big_container_cycle_function, ("amount", "main", "up"))
+    
+    amount_ob = create_textline(
+        "amount:"+str(display_amount), base_position)
         
+    up_pos=list(base_position)
+    up_pos[0]+=0.1
+    up_pos[2]+=0.05
+    a_up = create_button(
+        "+", up_pos, scale, 
+        big_container_cycle_function, cycle_args_up,frame_size = (-1.5,1.5,-0.75,0.75))
+    
+    down_pos=list(base_position)
+    down_pos[0]+=0.1
+    down_pos[2]-=0.05
     a_down = create_button(
-        "down", (-0.6, 0.0, -0.5), scale,
-         big_container_cycle_function, ("amount", "main", "down"))
+        "-", down_pos, scale,
+         big_container_cycle_function, cycle_args_down,frame_size = (-1.5,1.5,-0.75,0.75))
     elements = [amount_ob, a_up, a_down]
     return  elements
 
-def create_textline(text,position=(0.0,0.0,-0.6),scale=(0.05,0.05,0.05)):
+def create_textline(text,position=(0.0,0.0,-0.6),scale=(0.05,0.05,0.05),):
     line=DirectLabel(text=text,pos=position,scale=scale,textMayChange=1)
+    
+    #line.setCardAsMargin(0.1,0.1,0.1,0.1)
+    
+    #tl=TextNode("MyTextNode")
+    
+    #tl.set_text(text)
+    #tl.setCardAsMargin(0.1,0.1,0.1,0.1)
+    #tl.setCardColor(1,1,1,1)
+    #tl.setCardDecal(True) # to render on the card
+    #
     return line
+    
+def create_new_textline(text,position):
+    #line.setCardAsMargin(0.1,0.1,0.1,0.1)
+    
+    tl=TextNode(text)
+    
+    tl.set_text(text)
+    tl.setTextColor(0,0,0,1)
+    tl.setCardAsMargin(0.1,0.1,0.1,0.1)
+    tl.setCardColor(0.9,0.9,0.9,1)
+    tl.setCardDecal(True) # to render on the card
+   
+    #text = TextNode('node name')
+    #text.setText("Every day in every way I'm getting better and better.")
+    textNodePath = aspect2d.attachNewNode(tl)
+    textNodePath.setScale(0.05)
+    textNodePath.setPos(position)
+    return textNodePath
 
 def create_charge_bar(position=(0.0,0.0,0.5)):
     #like a tooltip, but scale it?
