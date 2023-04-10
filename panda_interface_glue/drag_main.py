@@ -46,7 +46,7 @@ class Grid:
     'key=grid_key_prefix + str((x_i,y_i))'
     """
 
-    def __init__(self, pos, offset, rows_collums=(3, 3), frame_kwargs={},default=True,grid_key_prefix="",owner=None):
+    def __init__(self, pos, offset, rows_collums=(3, 3), frame_kwargs={},default=True,grid_key_prefix="",owner=None,pixels=True):
         
         self.default_drops=[]
         
@@ -64,13 +64,16 @@ class Grid:
                 if x_i == 2:
                     dd_type = "red"
                 
-                pos_i = (pos[0] + offset[0] * x_i, pos[1] + offset[1] * y_i)
-                
+                if pixels:
+                    pos_i = (pos[0] + offset[0] * x_i, pos[1] + offset[1] * y_i)
+                else:
+                    pos_i = (pos[0] + offset[0] * x_i, 0,  pos[2] + offset[1] * y_i)
+                    print("pos",pos_i)
                 if "drag_drop_type" not in frame_kwargs:
                     frame_kwargs["drag_drop_type"]=dd_type
                 
                 key=grid_key_prefix + str((x_i,y_i))
-                
+                frame_kwargs["pixels"]=pixels
                 frame_kwargs["pos"]=pos_i
                 frame_kwargs["key"]=key
                 frame_kwargs["owner"]=owner
@@ -87,9 +90,9 @@ class Grid:
 
 
 class TargetColoredGrid(Grid):
-    def __init__(self, pos, offset, colors, rows_collums=(6, 1),shuffle=True,grid_key_prefix="target"):
-        
-        Grid.__init__(self,pos,offset,rows_collums,grid_key_prefix=grid_key_prefix)
+    def __init__(self, pos, offset, colors, rows_collums=(6, 1),shuffle=True,grid_key_prefix="target",pixels=True):
+        print(pos)
+        Grid.__init__(self,pos,offset,rows_collums,grid_key_prefix=grid_key_prefix,pixels=pixels)
         
         #super(TargetColoredGrid,self).__init__(pos,offset,rows_collums)
         
@@ -153,7 +156,7 @@ def destroy_drag_tooltip(parent,*args):
 def drop_decide(DC,frame,*args,**kwargs):
     
     drop_this_smooth = False
-    
+    print("my drop decide")
     if DC.last_hover_in == None:
         if "sorted_elements" in dir(DC.current_dragged.last_drag_drop_anchor):
             drop_this_smooth = True
@@ -173,7 +176,8 @@ def construct_draggable(abstract_container,
                         drag_type,
                         rel_col=(1.0,1.0,1.0,1.0),
                         represented_item=None,
-                        amount=1):
+                        amount=1,
+                        pixels=True):
     """construct a draggable frame that contains another object
     there is some... design foo involved.
     by having it contain a different object, the interactions may not be 
@@ -186,9 +190,19 @@ def construct_draggable(abstract_container,
     (checks are in this order)    
     """
     
-    frame = DirectFrame(    frameSize=_rec2d(30, 30),
+    
+    
+                
+    d={}
+    if pixels:
+        d["frameSize"]=_rec2d(30, 30)
+        d["parent"]=pixel2d
+    else:
+        fsfloat=0.05
+        d["frameSize"]=(-fsfloat,fsfloat,-fsfloat,fsfloat)
+    frame = DirectFrame(    
                             state=DGG.NORMAL,
-                            parent=pixel2d,
+                            **d,
                             #sortOrder=0,
                             )
     
@@ -204,6 +218,11 @@ def construct_draggable(abstract_container,
     # bind the events
     frame.bind(DGG.B1PRESS, abstract_container.left_mouse_decide, [frame])
     frame.bind(DGG.B1RELEASE, drop_decide, [abstract_container, frame])
+    print("did bind release")
+    frame.setBin("gui-popup", 0)
+    #frame.setBin("guiframe",2)
+    #frame.setDepthTest(False)
+    #frame.setDepthWrite(False)
     
     h, w = get_local_center(frame)
     pos=(0.4,-0.3,-0.5)
@@ -224,16 +243,24 @@ def construct_draggable(abstract_container,
         text=represented_item.text
     else:
         text=str(represented_item)
+    
+    if pixels:
+        scale=15
+    else:
+        scale=0.03
         
+    pos=(0,0,0)
     T=OnscreenText(text=text, 
-                    scale=15,
+                    scale=scale,
                     pos=pos,
                     fg=(0,0,0, 1),
-                    shadow=(1,1,1, 0.5))#DirectLabel(text=text,pos=position,scale=(0.1,0.1,0.1),textMayChange=0)
+                    shadow=(1,1,1, 0.5))#DirectLabel(text=text,pos=position,scale=(0.1,0.1,0.1),textMayChange=0)basedonyourresponseIthinkyouareprettycool
     
     T.reparent_to(frame)
     T.setAlign(0)
-    T.setPos(0,-10)
+    
+    if pixels:
+        T.setPos(0,-10)
     
     if amount!=1:
         pos2=(0,0,0)#0.4,-0.3,-0.55)
@@ -242,6 +269,12 @@ def construct_draggable(abstract_container,
         T.reparent_to(frame)
         T.setAlign(0)
         T.setPos(0,-20)
+    
+    T.setBin("gui-popup", 1)
+    #T.setDepthTest(False)
+    #T.setDepthWrite(False)
+    #setBinType
+
     
     #should work but doesn't show. ask in irc
     #frame.bind(DGG.WITHIN , create_drag_tooltip,[frame,pixel2d,represented_item.name])
@@ -287,20 +320,34 @@ def construct_frame(pos,
                     drag_drop_type=None,
                     key=None,
                     owner=None,
+                    pixels=True,
                     ):
     #color=(
        # 1, 1, 1, 1.0),
        
+    d={}
+    if pixels:
+        d["frameSize"]=_rec2d(*size)
+        d["parent"]=pixel2d
+    else:
+        fsfloat=0.06
+        d["frameSize"]=(-fsfloat,fsfloat,-fsfloat,fsfloat)
+    
     kwargs = {"frameColor": color,
-              "frameSize": _rec2d(*size),
               "state": DGG.NORMAL,
-              "parent": pixel2d, #aspect2d
+              **d,
               #"sortOrder":1,
               }
     
     frame = DirectFrame(**kwargs)
     #frame.setColorOff(0)
-    frame.set_pos(_pos2d(*pos))
+    
+    if pixels:
+        frame.set_pos(_pos2d(*pos))
+    else:
+        
+        frame.set_pos(pos)
+    
     frame.drag_drop_type = drag_drop_type
     frame.key=key
     frame.is_draggable=False
@@ -386,6 +433,11 @@ class Drag_Container:
     """
     def __init__(self,drop_callback=None):
         # helper attributes
+        
+        self.pixels=True
+        
+        # hey, it works. check .drag()
+        self.fake_shit_anchor = DirectFrame(frameSize=(0,0,0,0),pos=(0,0,0))
         
         self.adjust_existing = False
         self.current_last_drag_drop_anchor = None
@@ -520,10 +572,10 @@ class Drag_Container:
         Instead what I have to do here is to bind this monster
         to left click, then check what state I have entered before
         by pressing or releasing or control.
-        
-        
-        
         """
+        
+        print("yo")
+        
         if self.state["shift"]:
             if frame.amount > 1:
                 
@@ -566,18 +618,24 @@ class Drag_Container:
 
             if base.mouseWatcherNode.has_mouse():
                 mpos = base.mouseWatcherNode.get_mouse()
+                #pos = Point3(mpos.get_x()+0.1, 0, mpos.get_y()+0.1) # move it a bit so it's out of the way?
                 pos = Point3(mpos.get_x(), 0, mpos.get_y())
-                pos = pixel2d.get_relative_point(render2d, pos)
+                if self.pixels:
+                    pos = pixel2d.get_relative_point(render2d, pos)
+                #else:
+                    #pos = Point3(mpos.get_x()/2, 0, mpos.get_y()/2)
+                    #pos = render.get_relvative_point(self.current_dragged.parent,pos)
                 self.current_dragged.set_pos(pos)
                 
                 # also, update positions of other elements
                 # depending on this one and if I'm currently hover in one
-                
+                # this is for the smooth thing.
                 if self.adjust_existing:
                     if self.last_hover_in!=None and "sorted_elements" in dir(self.last_hover_in):
                         els=list(self.last_hover_in.sorted_elements)
                         if self.current_dragged in els:
                             els.remove(self.current_dragged)
+                            
                         position_on(self,self.last_hover_in,els)
                         
                         parent_pos=self.last_hover_in.get_pos()
@@ -596,13 +654,21 @@ class Drag_Container:
             widget.old_order=list(widget.last_drag_drop_anchor.sorted_elements)
             
         h, w = get_local_center(widget)
-
-        widget.reparent_to(pixel2d)
+        if self.pixels:
+            widget.reparent_to(pixel2d)
+        else:
+            # this isn't too great, but reparenting to render2d yeeted the thing somewhere 
+            # and not reparenting to a centered object, would take the old anchor position
+            # as an offset, since update sets the position to the mouse position, but that's
+            # implicitly added to the parent's position.
+            # so... yeah.
+            widget.reparent_to(self.fake_shit_anchor)
+            
         self.current_dragged = widget
         self.current_dragged.h = h
         self.current_dragged.w = w
         self.update()
-
+        
     def drop_smooth(self,frame):
         """
         figure out where the dragged element is in relation to other 
@@ -659,7 +725,7 @@ class Drag_Container:
         #if the target is "occupied"
         
         #and I still need to send that signal somehow.
-        
+        print("dropping?",self.current_dragged,self.last_hover_in)
         if self.current_dragged:
             #if I'm dragging something
             if self.last_hover_in:
@@ -728,8 +794,8 @@ class Drag_Container:
             old_key=self.current_dragged.key
             #if old_key!=new_key:
             #    snap_target = self.current_last_drag_drop_anchor
-            
-            self.drag_items.pop(old_key)
+            if old_key in self.drag_items:
+                self.drag_items.pop(old_key)
             
             #swap things around
             if len(snap_target.children)!=0:
@@ -782,7 +848,7 @@ def snap(ob, target):
     ob.wrt_reparent_to(target)
     ob.setPos(LVecBase3f(*(-h2+h,-w2+w)))
     
-def make_drag_items(self,c):
+def make_drag_items(self,c,pixels=True):
     # make some squares to be drag/dropped
     c=0
     Ds=[]
@@ -790,7 +856,7 @@ def make_drag_items(self,c):
         col=color_l[c]
         rel_col = colors[col]
         key=str((c,0))
-        D=construct_draggable(self.DC,col,rel_col,key)
+        D=construct_draggable(self.DC,col,rel_col,key,pixels=pixels)
         Ds.append(D)
         c += 1
     
@@ -815,9 +881,9 @@ def next_free_key(the_dict,drag_items):
             return tup[1]
         c+=1
 
-def container_surface(pos=(0,0),grid_key_prefix="this",grid_key="(smooth)"):
+def container_surface(pos=(0,0),grid_key_prefix="this",grid_key="(smooth)",size=(200,50),pixels=True):
     
-    F = construct_frame(pos=pos,size=(200,50))
+    F = construct_frame(pos=pos,size=size,pixels=pixels)
     F.key=grid_key_prefix+grid_key
     return F
 
@@ -893,6 +959,7 @@ def create_contents(my_list,DC,grid,color=colors["red"]):
     that represent those items and bind them to 
     available sockets?
     """
+    draggable_frames=[]
     for item in my_list:
         D = construct_draggable(DC,
                             drag_type = None,
@@ -902,6 +969,8 @@ def create_contents(my_list,DC,grid,color=colors["red"]):
         drag_items = DC.drag_items
         key = next_free_key(grid,DC.drag_items)
         lock(D,grid,drag_items,key)
+        draggable_frames.append(D)
+    return draggable_frames
 
 def get_prefix_from_grid_key(x):
     index = x.find("(")
