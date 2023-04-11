@@ -330,8 +330,11 @@ def construct_frame(pos,
         d["frameSize"]=_rec2d(*size)
         d["parent"]=pixel2d
     else:
-        fsfloat=0.06
-        d["frameSize"]=(-fsfloat,fsfloat,-fsfloat,fsfloat)
+        if size==(50,50):
+            fsfloat=0.06
+            d["frameSize"]=(-fsfloat,fsfloat,-fsfloat,fsfloat)
+        else:
+            d["frameSize"]=size
     
     kwargs = {"frameColor": color,
               "state": DGG.NORMAL,
@@ -631,16 +634,31 @@ class Drag_Container:
                 # depending on this one and if I'm currently hover in one
                 # this is for the smooth thing.
                 if self.adjust_existing:
+                    
                     if self.last_hover_in!=None and "sorted_elements" in dir(self.last_hover_in):
                         els=list(self.last_hover_in.sorted_elements)
                         if self.current_dragged in els:
                             els.remove(self.current_dragged)
+                        if self.pixels:
+                            size=200
+                        else:
+                            size=self.last_hover_in.getWidth()
+                        
+                        for n in vars(self.last_hover_in):
+                            if "frame" in n:
+                                print(n)
                             
-                        position_on(self,self.last_hover_in,els)
+                        #help(self.last_hover_in)
+                        print(self.last_hover_in.getHeight())
+                        print()
+                        #print("framesize?",self.last_hover_in["frameSize"])
+                                
+                        position_on(self,self.last_hover_in,els,size=size,pixels=self.pixels)
                         
                         parent_pos=self.last_hover_in.get_pos()
                         
-                        shift_to_make_space(els,parent_pos,pos)
+                        shift_to_make_space(els,parent_pos,pos,size=size)
+                        print("This")
         
         if task:
             return task.again
@@ -701,7 +719,11 @@ class Drag_Container:
                 these.insert(i,self.current_dragged)
                 
                 other_elements = these
-                position_on(self,self.last_hover_in,other_elements)
+                if self.pixels:
+                    size=200
+                else:
+                    size=self.last_hover_in.getWidth()
+                position_on(self,self.last_hover_in,other_elements,size=size,pixels=self.pixels)
                 
                 self.drag_items[self.last_hover_in.key]=self.current_dragged
                 self.current_dragged.key=self.last_hover_in.key
@@ -714,7 +736,13 @@ class Drag_Container:
                 else:
                     these = frame.last_drag_drop_anchor.sorted_elements
                     these.append(self.current_dragged)
-                position_on(self,frame.last_drag_drop_anchor,these)
+                
+                if self.pixels:
+                    size=200
+                else:
+                    size=self.last_hover_in.getWidth()
+                
+                position_on(self,frame.last_drag_drop_anchor,these,size=size,pixels=self.pixels)
             
             self.current_dragged=None
             
@@ -884,10 +912,14 @@ def next_free_key(the_dict,drag_items):
 def container_surface(pos=(0,0),grid_key_prefix="this",grid_key="(smooth)",size=(200,50),pixels=True):
     
     F = construct_frame(pos=pos,size=size,pixels=pixels)
-    F.key=grid_key_prefix+grid_key
+    if not pixels:
+        F.setScale(1)
+    F.key = grid_key_prefix+grid_key
+    F.sorted_elements = []
+    
     return F
 
-def shift_to_make_space(els,parent_pos,pos):
+def shift_to_make_space(els,parent_pos,pos,size=200):
     """weakness at the moment is that this is still
     done in pixels. same as the rest."""
     
@@ -909,8 +941,11 @@ def shift_to_make_space(els,parent_pos,pos):
     # so much I need to move things. Or I don't move things when I pick them up.
     # at least not on the x axis. 
     
-    lim = 80 # when things start to get moved
-    move_d = 20 # how far they are moved at most 
+    
+    
+    
+    lim = size*0.4 # when things start to get moved
+    move_d = size*0.1 # how far they are moved at most 
     
     for x in els:
         el_pos=x.get_pos()
@@ -929,6 +964,7 @@ def shift_to_make_space(els,parent_pos,pos):
         else:
             np_pos = el_pos
         
+        print(np_pos)
         x.set_pos(np_pos)
 
 def create_button(text,position,scale,function, arguments,text_may_change=0,frame_size=(-4.5,4.5,-0.75,0.75)):
@@ -977,20 +1013,32 @@ def get_prefix_from_grid_key(x):
     prefix = x[:index]
     return prefix
 
-def some_function(elements):
+def some_function(elements,my_length=200,pixels=True):
+    
+    if pixels:
+        off = 0
+    else:
+        off=my_length/2
+    
     max_x=len(elements)
     x=0
-    my_length=200
-    step_size=my_length/max_x
+    
+    step_size=(my_length/(max_x))
+    print("step",step_size)
     while x < max_x:
+        
         #15 is from the size of the tile?
-        yield ((0.5+x)*(step_size)-15,0,0)
+        val=((0.5+x)*(step_size)-off,0,0)
+        #val=(x*step_size,0,0)
+        
+        yield val
         x+=1
     
-def position_on(drag_controller,big_frame,elements):
-    my_gen=some_function(elements)
+def position_on(drag_controller,big_frame,elements,size=200, pixels=True):
+    my_gen = some_function(elements,size,pixels=pixels)
+    
     for x in elements:
-        pos=my_gen.__next__()
+        pos = my_gen.__next__()
         x.wrt_reparent_to(big_frame)
         x.last_drag_drop_anchor=big_frame
         #x.is_draggable=True
