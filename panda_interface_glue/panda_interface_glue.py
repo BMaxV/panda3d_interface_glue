@@ -156,7 +156,6 @@ def destroy_buildmenu(d):
 
 def destroy_inventory(drag_main_container):
     for key in drag_main_container.grid:
-        #if type(x_key)==str:
         el=drag_main_container.grid[key]
         el.removeNode()
 
@@ -245,7 +244,6 @@ def build_hierarchy_interface(layers=None):
     
 def destroy_hierchy_interface(drag_main_container):
     for key in drag_main_container.grid:
-        #if type(x_key)==str:
         el=drag_main_container.grid[key]
         el.removeNode()
 
@@ -679,7 +677,7 @@ def create_button(text,position,scale,function, arguments,text_may_change=0,fram
                                    #scale=.1, pad=(.2, .2),
                                    #rolloverSound=None, clickSound=None,
                                    #command=self.toggleMusicBox)
-    position[0]+=0.1
+    #position[0]+=0.1
     
     button.setPos(*position)
     
@@ -694,6 +692,18 @@ def create_log_scroll_list():
     return o
 
 def create_onscreentext(text="default",pos=(0.5,-0.5),align="right",scale=0.07):
+    """ok so, all of direct gui is bad and badly documented. I frankly don't understand how the system works.
+    I suppose it's very smartly built and modular.
+    
+    onscreen texts have lots of options specificed.
+    
+    there is some auto adjusting functions in Directguidlabel.
+    but I'm not sure if I can set a margin?
+    
+    #... maybe directlabel will have a textnode and I can set the font to that?
+    textNode.setFont(font)
+    """
+    
     if align=="right":
         align=TextNode.ARight
     elif align=="left":

@@ -18,7 +18,7 @@ class App:
         # init showvase
         base = drag_main.ShowBase.ShowBase()
         
-        pixels=True
+        pixels=False
         
         self.DC=drag_main.Drag_Container()
         self.DC.pixels=pixels

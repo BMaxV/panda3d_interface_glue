@@ -1,7 +1,12 @@
 import drag_main
-
+from drag_main import DirectFrame
 
 class App2:
+    
+    def do_aspect_bullshit(self,*args):
+        print("yo")
+        #self.DC.aspect_ratio=self.b.getAspectRatio()
+        
     def __init__(self):
         #######
         # this is panda stuff
@@ -13,14 +18,26 @@ class App2:
         drag_main.WindowProperties.setDefault(wp)
         # init showvase
         self.b = drag_main.ShowBase.ShowBase()
-
+        
+        #self.b.accept("window-event",self.do_aspect_bullshit)
         #####
         # this sets up the elements for the demo.
 
         self.DC = drag_main.Drag_Container()
         self.DC.adjust_existing = True
 
-        pixels = True
+        pixels = False
+        
+        if False:
+            c=0
+            m=10
+            while c < m:
+                pos=(-1+0.2*c,0,0)
+                size=(-0.05, 0.05, -0.05, 0.05)
+                DirectFrame(pos=pos,frameSize=size)
+                c+=1
+        #return
+        
         if pixels:
             pos1 = (200, 200)
             pos2 = (200, 400)
@@ -58,7 +75,7 @@ class App2:
                 self.F4, self.DC.hover_in, self.DC.hover_out)
 
         a = drag_main.construct_draggable(self.DC, None, rel_col=(
-            1.0, 0, 0, 1.0), represented_item='A', pixels=pixels)
+            1.0, 0, 0, 1.0), represented_item='Aasdfasdfasdf', pixels=pixels)
         b = drag_main.construct_draggable(self.DC, None, rel_col=(
             1.0, 0, 0, 1.0), represented_item='B', pixels=pixels)
         c = drag_main.construct_draggable(self.DC, None, rel_col=(

@@ -68,7 +68,7 @@ class Grid:
                     pos_i = (pos[0] + offset[0] * x_i, pos[1] + offset[1] * y_i)
                 else:
                     pos_i = (pos[0] + offset[0] * x_i, 0,  pos[2] + offset[1] * y_i)
-                    print("pos",pos_i)
+                    
                 if "drag_drop_type" not in frame_kwargs:
                     frame_kwargs["drag_drop_type"]=dd_type
                 
@@ -91,7 +91,7 @@ class Grid:
 
 class TargetColoredGrid(Grid):
     def __init__(self, pos, offset, colors, rows_collums=(6, 1),shuffle=True,grid_key_prefix="target",pixels=True):
-        print(pos)
+        
         Grid.__init__(self,pos,offset,rows_collums,grid_key_prefix=grid_key_prefix,pixels=pixels)
         
         #super(TargetColoredGrid,self).__init__(pos,offset,rows_collums)
@@ -145,7 +145,7 @@ def create_drag_tooltip(parent,pixel2d,text="hello there",*args):
     
 def destroy_drag_tooltip(parent,*args):
     """destroy tooltip for draggables"""
-    print("parent,args",parent,args)
+    
     if "spawned_tooltip" in dir(parent):
         ob=parent.spawned_tooltip
         ob.removeNode()
@@ -156,7 +156,7 @@ def destroy_drag_tooltip(parent,*args):
 def drop_decide(DC,frame,*args,**kwargs):
     
     drop_this_smooth = False
-    print("my drop decide")
+    
     if DC.last_hover_in == None:
         if "sorted_elements" in dir(DC.current_dragged.last_drag_drop_anchor):
             drop_this_smooth = True
@@ -218,7 +218,7 @@ def construct_draggable(abstract_container,
     # bind the events
     frame.bind(DGG.B1PRESS, abstract_container.left_mouse_decide, [frame])
     frame.bind(DGG.B1RELEASE, drop_decide, [abstract_container, frame])
-    print("did bind release")
+    
     frame.setBin("gui-popup", 0)
     #frame.setBin("guiframe",2)
     #frame.setDepthTest(False)
@@ -247,30 +247,31 @@ def construct_draggable(abstract_container,
     if pixels:
         scale=15
     else:
-        scale=0.03
+        scale=0.05
         
     pos=(0,0,0)
     T=OnscreenText(text=text, 
                     scale=scale,
                     pos=pos,
                     fg=(0,0,0, 1),
-                    shadow=(1,1,1, 0.5))#DirectLabel(text=text,pos=position,scale=(0.1,0.1,0.1),textMayChange=0)basedonyourresponseIthinkyouareprettycool
+                    shadow=(1,1,1,1))
     
     T.reparent_to(frame)
-    T.setAlign(0)
+    T.setAlign(2)
+    T.setBin("gui-popup", 1)
     
     if pixels:
         T.setPos(0,-10)
     
     if amount!=1:
         pos2=(0,0,0)#0.4,-0.3,-0.55)
-        T=OnscreenText(text=str(amount), scale=15,
-        pos=pos2,fg=(0,0,0, 1), shadow=(1,1,1, 0.5))#DirectLabel(text=text,pos=position,scale=(0.1,0.1,0.1),textMayChange=0)
+        T=OnscreenText(text=str(amount), scale=scale,
+        pos=pos2,fg=(0,0,0, 1), shadow=(1,1,1, 0.5))
         T.reparent_to(frame)
         T.setAlign(0)
         T.setPos(0,-20)
     
-    T.setBin("gui-popup", 1)
+        T.setBin("gui-popup", 1)
     #T.setDepthTest(False)
     #T.setDepthWrite(False)
     #setBinType
@@ -475,6 +476,8 @@ class Drag_Container:
         # for more complex interactions
         self.split_object_collection =[]
     
+        
+    
     def next_free_key(self):
         xl=self.grid.d.keys()
         xl2=[]
@@ -490,7 +493,7 @@ class Drag_Container:
     
     def hover_in(self, widget, mouse_pos=None):
         '''Set the widget to be the target to drop objects onto'''
-
+        
         self.last_hover_in = widget
         self.last_hover_drag_drop_type = widget.drag_drop_type
 
@@ -577,7 +580,7 @@ class Drag_Container:
         by pressing or releasing or control.
         """
         
-        print("yo")
+        
         
         if self.state["shift"]:
             if frame.amount > 1:
@@ -621,45 +624,33 @@ class Drag_Container:
 
             if base.mouseWatcherNode.has_mouse():
                 mpos = base.mouseWatcherNode.get_mouse()
+                mpos = aspect2d.getRelativePoint(render2d, (mpos[0],mpos[1],0))
                 #pos = Point3(mpos.get_x()+0.1, 0, mpos.get_y()+0.1) # move it a bit so it's out of the way?
                 pos = Point3(mpos.get_x(), 0, mpos.get_y())
                 if self.pixels:
                     pos = pixel2d.get_relative_point(render2d, pos)
-                #else:
-                    #pos = Point3(mpos.get_x()/2, 0, mpos.get_y()/2)
-                    #pos = render.get_relvative_point(self.current_dragged.parent,pos)
+                
+                
                 self.current_dragged.set_pos(pos)
                 
                 # also, update positions of other elements
                 # depending on this one and if I'm currently hover in one
                 # this is for the smooth thing.
                 if self.adjust_existing:
-                    
                     if self.last_hover_in!=None and "sorted_elements" in dir(self.last_hover_in):
                         els=list(self.last_hover_in.sorted_elements)
                         if self.current_dragged in els:
                             els.remove(self.current_dragged)
+                        
                         if self.pixels:
                             size=200
                         else:
                             size=self.last_hover_in.getWidth()
-                        
-                        for n in vars(self.last_hover_in):
-                            if "frame" in n:
-                                print(n)
                             
-                        #help(self.last_hover_in)
-                        print(self.last_hover_in.getHeight())
-                        print()
-                        #print("framesize?",self.last_hover_in["frameSize"])
-                                
                         position_on(self,self.last_hover_in,els,size=size,pixels=self.pixels)
-                        
                         parent_pos=self.last_hover_in.get_pos()
-                        
                         shift_to_make_space(els,parent_pos,pos,size=size)
-                        print("This")
-        
+                        
         if task:
             return task.again
 
@@ -670,7 +661,8 @@ class Drag_Container:
         
         if "sorted_elements" in dir(widget.last_drag_drop_anchor):
             widget.old_order=list(widget.last_drag_drop_anchor.sorted_elements)
-            
+        
+        #widget.old_parent=widget.parent
         h, w = get_local_center(widget)
         if self.pixels:
             widget.reparent_to(pixel2d)
@@ -682,9 +674,11 @@ class Drag_Container:
             # so... yeah.
             widget.reparent_to(self.fake_shit_anchor)
             
+        
         self.current_dragged = widget
         self.current_dragged.h = h
         self.current_dragged.w = w
+        #self.last_hover_in=widget.old_parent
         self.update()
         
     def drop_smooth(self,frame):
@@ -695,6 +689,7 @@ class Drag_Container:
         pos = None
         if base.mouseWatcherNode.has_mouse():
             mpos = base.mouseWatcherNode.get_mouse()
+            mpos = aspect2d.getRelativePoint(render2d, (mpos[0],mpos[1],0))
             pos = Point3(mpos.get_x(), 0, mpos.get_y())
         
         if pos==None:
@@ -704,8 +699,10 @@ class Drag_Container:
             if self.last_hover_in:
                 # and I'm hovering somewhere.
                 parent_pos=self.last_hover_in.get_pos()
-                pos = pixel2d.get_relative_point(render2d, pos)
+                if self.pixels:
+                    pos = pixel2d.get_relative_point(render2d, pos)
                 
+                #get my list.
                 these=list(self.last_hover_in.sorted_elements)
                 if self.current_dragged in these:
                     these.remove(self.current_dragged)
@@ -740,7 +737,7 @@ class Drag_Container:
                 if self.pixels:
                     size=200
                 else:
-                    size=self.last_hover_in.getWidth()
+                    size=frame.last_drag_drop_anchor.getWidth()
                 
                 position_on(self,frame.last_drag_drop_anchor,these,size=size,pixels=self.pixels)
             
@@ -753,13 +750,14 @@ class Drag_Container:
         #if the target is "occupied"
         
         #and I still need to send that signal somehow.
-        print("dropping?",self.current_dragged,self.last_hover_in)
+        
         if self.current_dragged:
             #if I'm dragging something
             if self.last_hover_in:
                 #if I'm hovering inside something that makes sense.
                 cond11=(self.last_hover_drag_drop_type == None)
                 cond12=(self.current_dragged.drag_drop_type == self.last_hover_drag_drop_type)
+                
                 if self.ignore_ownership==False:
                     cond2=(self.last_hover_in.owner==self.current_last_drag_drop_anchor.owner)
                 else:
@@ -795,19 +793,15 @@ class Drag_Container:
                     cond2,
                     cond3,
                     self.last_hover_in.key , self.drag_items]
-                    print("error type doesn't match, fall back",str(error_message))
+                    
                     # in this case the frame the user hovers over is invalid.
                     # the last one gets picked as default target and is
                     # snapped to.
                     snap_target = self.current_last_drag_drop_anchor
                     
             else:
-                
                 self.drop_option=self.current_dragged
-                
-                print("last_hover_hin is none")
                 snap_target=self.current_last_drag_drop_anchor
-            
             
             if snap_target.is_draggable:
                 #oops, trying to drop an item on the item,
@@ -833,7 +827,7 @@ class Drag_Container:
                     other.snap_target.children[0]
                     
                     snap(other,self.grid[old_key])
-                    print("oldkey",old_key)
+                    
                     self.drag_items[old_key]=other
                     other.key=old_key
                     self.output_info.append((other,self.grid[old_key]))
@@ -964,7 +958,6 @@ def shift_to_make_space(els,parent_pos,pos,size=200):
         else:
             np_pos = el_pos
         
-        print(np_pos)
         x.set_pos(np_pos)
 
 def create_button(text,position,scale,function, arguments,text_may_change=0,frame_size=(-4.5,4.5,-0.75,0.75)):
@@ -978,7 +971,7 @@ def create_button(text,position,scale,function, arguments,text_may_change=0,fram
                                    #scale=.1, pad=(.2, .2),
                                    #rolloverSound=None, clickSound=None,
                                    #command=self.toggleMusicBox)
-    position[0]+=0.1
+    
     
     button.setPos(*position)
     
@@ -989,7 +982,7 @@ def create_button(text,position,scale,function, arguments,text_may_change=0,fram
     return button
 
 
-def create_contents(my_list,DC,grid,color=colors["red"]):
+def create_contents(my_list,DC,grid,color=colors["red"],pixels=True):
     """
     for elements in a list, create draggable items
     that represent those items and bind them to 
@@ -1001,6 +994,7 @@ def create_contents(my_list,DC,grid,color=colors["red"]):
                             drag_type = None,
                             represented_item = str(item),
                             rel_col = color,
+                            pixels= pixels
                             )
         drag_items = DC.drag_items
         key = next_free_key(grid,DC.drag_items)
@@ -1024,7 +1018,7 @@ def some_function(elements,my_length=200,pixels=True):
     x=0
     
     step_size=(my_length/(max_x))
-    print("step",step_size)
+    
     while x < max_x:
         
         #15 is from the size of the tile?
@@ -1039,9 +1033,11 @@ def position_on(drag_controller,big_frame,elements,size=200, pixels=True):
     
     for x in elements:
         pos = my_gen.__next__()
+        #pos = 
         x.wrt_reparent_to(big_frame)
         x.last_drag_drop_anchor=big_frame
         #x.is_draggable=True
+        
         x.setPos(pos)
     # ok this is somewhat limiting the things that I want to drop.
     new_elements = list(set(elements))
