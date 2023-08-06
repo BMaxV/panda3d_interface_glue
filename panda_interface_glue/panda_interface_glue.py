@@ -785,6 +785,45 @@ class CyclingList:
             x.removeNode()
 
 
+class Framehistogram:
+	
+	def __init__(self,pos,size=(0.5,0.2,0),barnumber=20,value_range=(0,10),moving=True):
+		self.pos = pos
+		self.size = size
+		self.elements = []
+		self.barnumber = barnumber
+		self.value_range = value_range
+		self.moving=moving
+		
+	def add_value(self,value):
+		
+		while len(self.elements) >= self.barnumber:
+			x = self.elements.pop(0)
+			x.removeNode()
+			self.move_bars()
+		
+		framesize_x = (self.size[0]/self.barnumber)
+		framesize_y = self.size[1]
+		framesize = (0,framesize_x,0,framesize_y)
+		x = (len(self.elements)-self.barnumber/2)*framesize_x
+		pos = (self.pos[0]+x,self.pos[1],self.pos[2])
+		F = DirectFrame(pos=pos,frameSize=framesize)
+		
+		value = value-self.value_range[0]
+		yscale = value/self.value_range[1]-self.value_range[0]
+		
+		F.setScale(1,1,yscale)
+		
+		self.elements.append(F)
+		
+	def move_bars(self):
+		for x in self.elements:
+			pos=x.getPos()
+			xdiff=self.size[0]/self.barnumber
+			npos = (pos[0]-xdiff,pos[1],pos[2])
+			x.setPos(npos)
+
+
 class EntrySearch:
     """
     awysiwyg
