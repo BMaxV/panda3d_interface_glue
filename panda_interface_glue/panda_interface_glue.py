@@ -13,6 +13,7 @@ from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter
 from panda3d.core import Texture, GeomNode
 from panda3d.core import NodePath
 
+from panda3d.core import TextNode
 
 from panda3d.core import *
 from direct.gui.DirectGui import *
@@ -665,7 +666,49 @@ def package_my_table(b,my_table,element_spacing=1,table_pos=(0,0,0)):
     
     
     return elements , myframe2
-    
+
+def create_custom_button(mytext,position,function,arguments,style=None):
+	"""this will be a fully custom button, with text and shit.
+	
+	This will be moderately awful, since I'm using DirectFrame, because
+	I know how hover in and click events work for that one.
+	"""
+	# styling for the text.
+	text_node = TextNode("my text node")
+	text_node.set_align(2)
+	text_node.set_text(mytext)
+	if "font" in style:
+		my_font = style.pop("font")
+		text_node.set_font(my_font)
+		
+	# default styling for the frame
+	default_style = {"pos":(0,0,0),
+					"scale":0.05,
+					"frameSize":(-4.5,4.5,-0.75,0.75),
+					"state": DGG.NORMAL,
+					"frameColor": (0.1,0.1,0.1,1),}
+	
+	# if there is supposed to be a background... 
+	# let me see how I did that with the frame wrap.
+	
+	active_style = dict(default_style)
+	active_style.update(style)
+	
+	mybutton = DirectFrame(**active_style)
+	mybutton.bind(DGG.B1PRESS,function,arguments)
+	mybutton.setTransparency(1)
+	
+	
+	
+	textNodePath = aspect2d.attachNewNode(text_node)
+	textNodePath.setScale(default_style["scale"])
+	textNodePath.setPos(default_style["pos"])
+	
+	mybutton.textnodepath=textNodePath
+	mybutton.textnode=text_node
+	
+	return mybutton
+	
 def create_button(text,position,scale,function, arguments,text_may_change=0,frame_size=(-4.5,4.5,-0.75,0.75)):
     
     position=LVector3(*position)
@@ -902,7 +945,7 @@ def create_textline(text,position=(0.0,0.0,-0.6),scale=(0.05,0.05,0.05),):
 def create_new_textline(text,position):
     #line.setCardAsMargin(0.1,0.1,0.1,0.1)
     
-    tl=TextNode(text)
+    tl = TextNode(text)
     
     tl.set_text(text)
     tl.setTextColor(0,0,0,1)

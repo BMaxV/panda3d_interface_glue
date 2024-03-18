@@ -69,3 +69,12 @@ if __name__ == "__main__":
 I built this smooth drag and drop system for e.g. card games or intuitive sorting for the user
 
 ![smoothgif](smooth.gif)
+
+
+# custom button
+
+I put in code to generate a custom button, with a text node and a DirectFrame, because that seems to be the only way of customizing the font. It doesn't have the "default" modes that DirectButton has, but you can include those in the function if you want. Not finished with this, I just built the 0.5 so to speak, I will probably update this once I use it a bit.
+
+![custombutton](button.JPG)
+
+font in the button example is Dela Gothic One from google fonts, original zip attached, open font license.
