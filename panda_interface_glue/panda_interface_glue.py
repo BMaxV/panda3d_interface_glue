@@ -1,4 +1,4 @@
-#import panda3d.core import *
+﻿#import panda3d.core import *
 from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectLabel import DirectLabel
 from direct.gui import DirectGuiGlobals as DGG
@@ -668,47 +668,47 @@ def package_my_table(b,my_table,element_spacing=1,table_pos=(0,0,0)):
     return elements , myframe2
 
 def create_custom_button(mytext,position,function,arguments,style=None):
-	"""this will be a fully custom button, with text and shit.
-	
-	This will be moderately awful, since I'm using DirectFrame, because
-	I know how hover in and click events work for that one.
-	"""
-	# styling for the text.
-	text_node = TextNode("my text node")
-	text_node.set_align(2)
-	text_node.set_text(mytext)
-	if "font" in style:
-		my_font = style.pop("font")
-		text_node.set_font(my_font)
-		
-	# default styling for the frame
-	default_style = {"pos":(0,0,0),
-					"scale":0.05,
-					"frameSize":(-4.5,4.5,-0.75,0.75),
-					"state": DGG.NORMAL,
-					"frameColor": (0.1,0.1,0.1,1),}
-	
-	# if there is supposed to be a background... 
-	# let me see how I did that with the frame wrap.
-	
-	active_style = dict(default_style)
-	active_style.update(style)
-	
-	mybutton = DirectFrame(**active_style)
-	mybutton.bind(DGG.B1PRESS,function,arguments)
-	mybutton.setTransparency(1)
-	
-	
-	
-	textNodePath = aspect2d.attachNewNode(text_node)
-	textNodePath.setScale(default_style["scale"])
-	textNodePath.setPos(default_style["pos"])
-	
-	mybutton.textnodepath=textNodePath
-	mybutton.textnode=text_node
-	
-	return mybutton
-	
+    """this will be a fully custom button, with text and shit.
+    
+    This will be moderately awful, since I'm using DirectFrame, because
+    I know how hover in and click events work for that one.
+    """
+    # styling for the text.
+    text_node = TextNode("my text node")
+    text_node.set_align(2)
+    text_node.set_text(mytext)
+    if "font" in style:
+        my_font = style.pop("font")
+        text_node.set_font(my_font)
+        
+    # default styling for the frame
+    default_style = {"pos":(0,0,0),
+                    "scale":0.05,
+                    "frameSize":(-4.5,4.5,-0.75,0.75),
+                    "state": DGG.NORAL,
+                    "frameColor": (0.1,0.1,0.1,1),}
+    
+    # if there is supposed to be a background... 
+    # let me see how I did that with the frame wrap.
+    
+    active_style = dict(default_style)
+    active_style.update(style)
+    
+    mybutton = DirectFrame(**active_style)
+    mybutton.bind(DGG.B1PRESS,function,arguments)
+    mybutton.setTransparency(1)
+    
+    
+    
+    textNodePath = aspect2d.attachNewNode(text_node)
+    textNodePath.setScale(default_style["scale"])
+    textNodePath.setPos(default_style["pos"])
+    
+    mybutton.textnodepath=textNodePath
+    mybutton.textnode=text_node
+    
+    return mybutton
+    
 def create_button(text,position,scale,function, arguments,text_may_change=0,frame_size=(-4.5,4.5,-0.75,0.75)):
     
     position=LVector3(*position)
@@ -716,10 +716,10 @@ def create_button(text,position,scale,function, arguments,text_may_change=0,fram
                     pos=position,
                     scale=scale,
                     frameSize=frame_size,
-                    textMayChange=text_may_change)#(.9, 0, .75), text="Open"))
+                    textayChange=text_may_change)#(.9, 0, .75), text="Open"))
                                    #scale=.1, pad=(.2, .2),
                                    #rolloverSound=None, clickSound=None,
-                                   #command=self.toggleMusicBox)
+                                   #command=self.toggleusicBox)
     #position[0]+=0.1
     
     button.setPos(*position)
@@ -829,42 +829,42 @@ class CyclingList:
 
 
 class Framehistogram:
-	
-	def __init__(self,pos,size=(0.5,0.2,0),barnumber=20,value_range=(0,10),moving=True):
-		self.pos = pos
-		self.size = size
-		self.elements = []
-		self.barnumber = barnumber
-		self.value_range = value_range
-		self.moving=moving
-		
-	def add_value(self,value):
-		
-		while len(self.elements) >= self.barnumber:
-			x = self.elements.pop(0)
-			x.removeNode()
-			self.move_bars()
-		
-		framesize_x = (self.size[0]/self.barnumber)
-		framesize_y = self.size[1]
-		framesize = (0,framesize_x,0,framesize_y)
-		x = (len(self.elements)-self.barnumber/2)*framesize_x
-		pos = (self.pos[0]+x,self.pos[1],self.pos[2])
-		F = DirectFrame(pos=pos,frameSize=framesize)
-		
-		value = value-self.value_range[0]
-		yscale = value/self.value_range[1]-self.value_range[0]
-		
-		F.setScale(1,1,yscale)
-		
-		self.elements.append(F)
-		
-	def move_bars(self):
-		for x in self.elements:
-			pos=x.getPos()
-			xdiff=self.size[0]/self.barnumber
-			npos = (pos[0]-xdiff,pos[1],pos[2])
-			x.setPos(npos)
+    
+    def __init__(self,pos,size=(0.5,0.2,0),barnumber=20,value_range=(0,10),moving=True):
+        self.pos = pos
+        self.size = size
+        self.elements = []
+        self.barnumber = barnumber
+        self.value_range = value_range
+        self.moving=moving
+        
+    def add_value(self,value):
+        
+        while len(self.elements) >= self.barnumber:
+            x = self.elements.pop(0)
+            x.removeNode()
+            self.move_bars()
+        
+        framesize_x = (self.size[0]/self.barnumber)
+        framesize_y = self.size[1]
+        framesize = (0,framesize_x,0,framesize_y)
+        x = (len(self.elements)-self.barnumber/2)*framesize_x
+        pos = (self.pos[0]+x,self.pos[1],self.pos[2])
+        F = DirectFrame(pos=pos,frameSize=framesize)
+        
+        value = value-self.value_range[0]
+        yscale = value/self.value_range[1]-self.value_range[0]
+        
+        F.setScale(1,1,yscale)
+        
+        self.elements.append(F)
+        
+    def move_bars(self):
+        for x in self.elements:
+            pos=x.getPos()
+            xdiff=self.size[0]/self.barnumber
+            npos = (pos[0]-xdiff,pos[1],pos[2])
+            x.setPos(npos)
 
 
 class EntrySearch:
@@ -928,37 +928,70 @@ def amount_setter(big_container,big_container_cycle_function,display_amount,base
     elements = [amount_ob, a_up, a_down]
     return  elements
 
-def create_textline(text,position=(0.0,0.0,-0.6),scale=(0.05,0.05,0.05),):
-    line=DirectLabel(text=text,pos=position,scale=scale,textMayChange=1)
+
+class ValueObserverUpdater:
+    def __init__(self,base_position=(-0.5,0,0.5),offset_vector=(0,0,-0.1),scale=0.05,style=None):
+        self.UI_elements = []
+        self.base_position = base_position
+        self.offset_vector = offset_vector
+        self.style = style
+        self.old_values = None
+        
+    def clean(self):
+        for x in self.UI_elements:
+            methods = dir(x)
+            if "destroy" in methods:
+                x.destroy()
+            elif "removeNode" in methods:
+                x.removeNode() 
+        self.UI_elements = []
     
-    #line.setCardAsMargin(0.1,0.1,0.1,0.1)
+    def build(self,values):
+        c=0
+        m=len(values)
+        bp = self.base_position
+        ov = self.offset_vector
+        if type(values) == list:
+            for x in values:
+                pos = bp[0]+c*ov[0],bp[1]+c*ov[1],bp[2]+c*ov[2]
+                node,nodepath=create_textline(str(value),pos)
+                self.UI_elements.append(nodepath)
+                
+        if type(values) == dict:
+            keylist = list(values.keys())
+            keylist.sort()
+            for key in keylist:
+                value=values[key]
+                my_text = f"{key}:{value}"
+                pos = bp[0]+c*ov[0],bp[1]+c*ov[1],bp[2]+c*ov[2]
+                node,nodepath=create_textline(my_text,pos)
+                self.UI_elements.append(nodepath)
+                
+
+    def main(self,new_values):
+        if new_values != self.old_values:
+            self.clean()
+            self.build(new_values)
+            self.old_values = new_values
+        
+
+def create_style_collection():
+    return my_style_collection
+
+def create_textline(text,position,color=(0.8,0.8,0.8,1),outline_color=(0,0,0,1),outline_geom=(0.1,0.1),make_card=True,card_margin=(0.1,0.1,0.1,0.1),card_color=(0.2,0.2,0.2,0.5),panda_font=None):
+    """I kind of want to accept style as a dict, and define keyword args"""
+    textnode = TextNode(text)
     
-    #tl=TextNode("MyTextNode")
+    textnode.set_text(text)
     
-    #tl.set_text(text)
-    #tl.setCardAsMargin(0.1,0.1,0.1,0.1)
-    #tl.setCardColor(1,1,1,1)
-    #tl.setCardDecal(True) # to render on the card
-    #
-    return line
-    
-def create_new_textline(text,position):
-    #line.setCardAsMargin(0.1,0.1,0.1,0.1)
-    
-    tl = TextNode(text)
-    
-    tl.set_text(text)
-    tl.setTextColor(0,0,0,1)
-    tl.setCardAsMargin(0.1,0.1,0.1,0.1)
-    tl.setCardColor(0.9,0.9,0.9,1)
-    tl.setCardDecal(True) # to render on the card
-   
-    #text = TextNode('node name')
-    #text.setText("Every day in every way I'm getting better and better.")
-    textNodePath = aspect2d.attachNewNode(tl)
+    textnode.setTextColor(color)
+    textnode.setCardAsargin(*card_margin)
+    textnode.setCardColor(*card_color)
+    textnode.setCardDecal(True)
+    textNodePath = aspect2d.attachNewNode(textnode)
     textNodePath.setScale(0.05)
     textNodePath.setPos(position)
-    return textNodePath
+    return textnode, textNodePath
 
 def create_charge_bar(position=(0.0,0.0,0.5)):
     #like a tooltip, but scale it?
@@ -1001,7 +1034,7 @@ def make_bars(bars=None,test=False,position=None,scale=None,bar_colors=None):
 def create_tooltip(text):
     print("creating tooltip?!")
     #how is this added to the renderer?
-    tooltip=DirectLabel(text=text,pos=(0.0,0.0,-0.5),scale=(0.1,0.1,0.1),textMayChange=1)
+    tooltip=DirectLabel(text=text,pos=(0.0,0.0,-0.5),scale=(0.1,0.1,0.1),textayChange=1)
     return tooltip
     
 def naive_test():
