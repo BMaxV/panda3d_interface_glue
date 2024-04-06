@@ -822,7 +822,7 @@ def create_button(text,position,scale,function, arguments,text_may_change=0,fram
                     pos=position,
                     scale=scale,
                     frameSize=frame_size,
-                    textayChange=text_may_change)#(.9, 0, .75), text="Open"))
+                    textMayChange=text_may_change)#(.9, 0, .75), text="Open"))
                                    #scale=.1, pad=(.2, .2),
                                    #rolloverSound=None, clickSound=None,
                                    #command=self.toggleusicBox)
@@ -1140,7 +1140,7 @@ def make_bars(bars=None,test=False,position=None,scale=None,bar_colors=None):
 def create_tooltip(text):
     print("creating tooltip?!")
     #how is this added to the renderer?
-    tooltip=DirectLabel(text=text,pos=(0.0,0.0,-0.5),scale=(0.1,0.1,0.1),textayChange=1)
+    tooltip=DirectLabel(text=text,pos=(0.0,0.0,-0.5),scale=(0.1,0.1,0.1),textMayChange=1)
     return tooltip
     
 def naive_test():
