@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language>
+<dict>
+<font>
+  <str>
+  DelaGothicOne-Regular.ttf
+  </str>
+</font>
+<fontpixels>
+  <int>
+  150
+  </int>
+</fontpixels>
+<foreground color>
+  <tuple>
+    <float>
+    0.8
+    </float>
+    <float>
+    0.2
+    </float>
+    <float>
+    0.2
+    </float>
+    <int>
+    1
+    </int>
+  </tuple>
+</foreground color>
+<outline color>
+  <tuple>
+    <int>
+    1
+    </int>
+    <int>
+    1
+    </int>
+    <int>
+    1
+    </int>
+    <int>
+    1
+    </int>
+  </tuple>
+</outline color>
+<outline thickness>
+  <int>
+  3
+  </int>
+</outline thickness>
+<outline fading>
+  <float>
+  0.5
+  </float>
+</outline fading>
+<frameColor>
+  <tuple>
+    <float>
+    0.8
+    </float>
+    <float>
+    0.8
+    </float>
+    <float>
+    0.8
+    </float>
+    <int>
+    1
+    </int>
+  </tuple>
+</frameColor>
+<frameSize>
+  <tuple>
+    <int>
+    -3
+    </int>
+    <int>
+    3
+    </int>
+    <int>
+    -1
+    </int>
+    <int>
+    2
+    </int>
+  </tuple>
+</frameSize>
+<frametexturefilename>
+  <str>
+  gradient_square.png
+  </str>
+</frametexturefilename>
+<borderUvWidth>
+  <tuple>
+    <float>
+    0.1
+    </float>
+    <float>
+    0.2
+    </float>
+  </tuple>
+</borderUvWidth>
+</dict>

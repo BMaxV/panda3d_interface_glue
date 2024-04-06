@@ -1,4 +1,6 @@
-﻿#import panda3d.core import *
+﻿import random
+
+#import panda3d.core import *
 from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectLabel import DirectLabel
 from direct.gui import DirectGuiGlobals as DGG
@@ -19,13 +21,109 @@ from panda3d.core import *
 from direct.gui.DirectGui import *
 from direct.showbase import ShowBase
 
-import random
+
 
 #from panda3d.core import render2d
 #from direct.gui.DirectGui import render2d
 
 from panda_interface_glue import drag_main
 
+from my_save import sxml_main
+
+def write_example_style(fn="mystyle.xml"):
+    
+    my_dict = {
+    "font":'DelaGothicOne-Regular.ttf',
+    "fontpixels":150,
+    "foreground color":(0.2,0.2,0.2,1),
+    "outline color":(1,1,1,1),
+    "outline thickness":3,
+    "outline fading":0.5,    
+    "frameColor":(0.8,0.8,0.8,1),
+    "frameSize":(-3,3,-1,2),
+    "frametexturefilename":"gradient_square.png",
+    "borderUvWidth":(0.2, 0.2),
+    }
+    
+    sxml_main.write(fn,my_dict)
+
+def load_style(showbase_instance,path="mystyle.xml"):
+    # let's assume I'm doing things locally.
+    
+    # i'm not doing this with css. I'm doing it with my xml loading.
+    #sxml_main.load(
+    
+    
+    d = sxml_main.read("mystyle.xml")
+    
+    
+    my_style = {
+            "frameColor":(0.8,0.8,0.8,1), # this is default a
+            "frameSize":(-3,3,-1,2),
+            }
+    
+    if "frame color" in d:
+        my_style["frameColor"] = d["frame color"]
+    
+    if "frame size" in d:
+        my_style["frameSize"]=d["frameSize"]
+    
+    if "frametexturefilename" in d:
+        fn = d["frametexturefilename"]#"gradient_square.png"
+        # this is creating the background texture.
+        tex = showbase_instance.loader.loadTexture(fn)
+        tex.wrap_u = SamplerState.WM_clamp
+        tex.wrap_v = SamplerState.WM_clamp
+        tex.wrap_w = SamplerState.WM_clamp
+        my_style["frameTexture"] = tex
+        # give UV width a default.
+        my_style["borderUvWidth"] = (0.2, 0.2)
+        my_style["relief"] = DGG.TEXTUREBORDER
+        
+    if "borderUvWidth" in d:
+        # bigger number here means smaller border
+        my_style["borderUvWidth"] = d["borderUvWidth"]
+    
+    if "font" in d:
+        # this is setting up the font
+        fn = d["font"]
+        font = showbase_instance.loader.loadFont(fn)
+        fontpixels = 100
+        
+        if "fontpixels" in d:
+            fontpixels = d["fontpixels"]
+            
+        font.setPixelsPerUnit(fontpixels) # increase for font sharpness
+        my_style["font"] = font
+        # again, defaults.
+        my_style["foreground color"] = (0.2,0.2,0.2,1)
+        my_style["outline color"] = (1,1,1,1)
+            
+    if "outline color" in d:
+        my_style["outline color"] = d["outline color"]
+    
+    if "foreground color" in d:
+        my_style["foreground color"] = d["foreground color"]
+    
+    if "font" in my_style:
+        # if I have a custom font, make sure to apply my different colors.
+        font = my_style["font"]
+        font.clear()
+        fgc = my_style["foreground color"]
+        bgc = my_style["outline color"]
+        outline_thickness = 3
+        outline_fading = 0.5
+        if "outline thickness" in d:
+            outline_thickness = d["outline thickness"]
+        if "outline fading" in d:
+            outline_fading = d["outline fading"]
+        font.setFg(fgc)
+        font.setOutline(bgc,outline_thickness,outline_fading)
+    # first number controls the thickness of the border, 
+    # second controls the fading, 0, no transparency, same as the other, fully transparent and you don't see anything.
+           
+    return my_style
+    
 
 def flip_yz(vector):
     new_vector=vector[0],vector[2],vector[1]
@@ -680,12 +778,20 @@ def create_custom_button(mytext,position,function,arguments,style=None):
     if "font" in style:
         my_font = style.pop("font")
         text_node.set_font(my_font)
-        
+    
+    pop_list = ["foreground color","outline color"]
+    
+    for x in pop_list:
+        if x in style:
+            style.pop(x)
+    
+    
     # default styling for the frame
+    
     default_style = {"pos":(0,0,0),
                     "scale":0.05,
                     "frameSize":(-4.5,4.5,-0.75,0.75),
-                    "state": DGG.NORAL,
+                    "state": DGG.NORMAL,
                     "frameColor": (0.1,0.1,0.1,1),}
     
     # if there is supposed to be a background... 
@@ -985,7 +1091,7 @@ def create_textline(text,position,color=(0.8,0.8,0.8,1),outline_color=(0,0,0,1),
     textnode.set_text(text)
     
     textnode.setTextColor(color)
-    textnode.setCardAsargin(*card_margin)
+    textnode.setCardAsMargin(*card_margin)
     textnode.setCardColor(*card_color)
     textnode.setCardDecal(True)
     textNodePath = aspect2d.attachNewNode(textnode)
