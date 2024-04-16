@@ -771,6 +771,8 @@ def create_custom_button(mytext,position,function,arguments,style=None):
     This will be moderately awful, since I'm using DirectFrame, because
     I know how hover in and click events work for that one.
     """
+    if style == None:
+        style = {}
     # styling for the text.
     text_node = TextNode("my text node")
     text_node.set_align(2)
@@ -788,7 +790,7 @@ def create_custom_button(mytext,position,function,arguments,style=None):
     
     # default styling for the frame
     
-    default_style = {"pos":(0,0,0),
+    default_style = {"pos":position,
                     "scale":0.05,
                     "frameSize":(-4.5,4.5,-0.75,0.75),
                     "state": DGG.NORMAL,
@@ -809,6 +811,8 @@ def create_custom_button(mytext,position,function,arguments,style=None):
     textNodePath = aspect2d.attachNewNode(text_node)
     textNodePath.setScale(default_style["scale"])
     textNodePath.setPos(default_style["pos"])
+    
+    mybutton.setPos(default_style["pos"])
     
     mybutton.textnodepath=textNodePath
     mybutton.textnode=text_node
