@@ -1098,6 +1098,12 @@ def create_textline(text,position,color=(0.8,0.8,0.8,1),outline_color=(0,0,0,1),
     textnode.setCardAsMargin(*card_margin)
     textnode.setCardColor(*card_color)
     textnode.setCardDecal(True)
+    if panda_font==None:
+        font=textnode.getFont()
+    
+    font.setOutline(outline_color,*outline_geom)
+    textnode.setFont(font)
+    
     if panda_font!=None:
         textnode.setFont(panda_font)
     textNodePath = aspect2d.attachNewNode(textnode)
