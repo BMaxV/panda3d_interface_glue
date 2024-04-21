@@ -46,7 +46,7 @@ class Grid:
     'key=grid_key_prefix + str((x_i,y_i))'
     """
 
-    def __init__(self, pos, offset, rows_collums=(3, 3), frame_kwargs={},default=True,grid_key_prefix="",owner=None,pixels=True):
+    def __init__(self, pos, offset, rows_collums=(3, 3), frame_kwargs={},default=True,grid_key_prefix="",owner=None,pixels=False):
         
         self.default_drops=[]
         
@@ -90,7 +90,7 @@ class Grid:
 
 
 class TargetColoredGrid(Grid):
-    def __init__(self, pos, offset, colors, rows_collums=(6, 1),shuffle=True,grid_key_prefix="target",pixels=True):
+    def __init__(self, pos, offset, colors, rows_collums=(6, 1),shuffle=True,grid_key_prefix="target",pixels=False):
         
         Grid.__init__(self,pos,offset,rows_collums,grid_key_prefix=grid_key_prefix,pixels=pixels)
         
@@ -177,7 +177,7 @@ def construct_draggable(abstract_container,
                         rel_col=(1.0,1.0,1.0,1.0),
                         represented_item=None,
                         amount=1,
-                        pixels=True):
+                        pixels=False):
     """construct a draggable frame that contains another object
     there is some... design foo involved.
     by having it contain a different object, the interactions may not be 
@@ -316,12 +316,12 @@ def lock(frame,grid,drag_items,key):
     frame.current_key=key
 
 def construct_frame(pos, 
-                    size=(50,50),
+                    size=(-0.06,0.06,-0.06,0.06),
                     color=(1, 1, 1, 1.0),
                     drag_drop_type=None,
                     key=None,
                     owner=None,
-                    pixels=True,
+                    pixels=False,
                     ):
     #color=(
        # 1, 1, 1, 1.0),
@@ -438,7 +438,7 @@ class Drag_Container:
     def __init__(self,drop_callback=None):
         # helper attributes
         
-        self.pixels=True
+        self.pixels=False
         
         # hey, it works. check .drag()
         self.fake_shit_anchor = DirectFrame(frameSize=(0,0,0,0),pos=(0,0,0))
@@ -870,7 +870,7 @@ def snap(ob, target):
     ob.wrt_reparent_to(target)
     ob.setPos(LVecBase3f(*(-h2+h,-w2+w)))
     
-def make_drag_items(self,c,pixels=True):
+def make_drag_items(self,c,pixels=False):
     # make some squares to be drag/dropped
     c=0
     Ds=[]
@@ -903,7 +903,7 @@ def next_free_key(the_dict,drag_items):
             return tup[1]
         c+=1
 
-def container_surface(pos=(0,0),grid_key_prefix="this",grid_key="(smooth)",size=(200,50),pixels=True):
+def container_surface(pos=(0,0),grid_key_prefix="this",grid_key="(smooth)",size=(-0.5,0.5,0.2,0.2),pixels=False):
     
     F = construct_frame(pos=pos,size=size,pixels=pixels)
     if not pixels:
@@ -982,7 +982,7 @@ def create_button(text,position,scale,function, arguments,text_may_change=0,fram
     return button
 
 
-def create_contents(my_list,DC,grid,color=colors["red"],pixels=True):
+def create_contents(my_list,DC,grid,color=colors["red"],pixels=False):
     """
     for elements in a list, create draggable items
     that represent those items and bind them to 
@@ -1007,7 +1007,7 @@ def get_prefix_from_grid_key(x):
     prefix = x[:index]
     return prefix
 
-def some_function(elements,my_length=200,pixels=True):
+def some_function(elements,my_length=200,pixels=False):
     
     if pixels:
         off = 0
@@ -1028,7 +1028,7 @@ def some_function(elements,my_length=200,pixels=True):
         yield val
         x+=1
     
-def position_on(drag_controller,big_frame,elements,size=200, pixels=True):
+def position_on(drag_controller,big_frame,elements,size=0.4, pixels=False):
     my_gen = some_function(elements,size,pixels=pixels)
     
     for x in elements:
