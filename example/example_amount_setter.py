@@ -9,14 +9,9 @@ class Wrapper:
 		self.b = ShowBase.ShowBase()
 		
 		# this is using default filenames and default values.
-		#pig.write_example_style()
-		my_style = pig.load_style(self.b,"mystyle.xml")
 		
-		# what you will actually use, text, position, function, arguments, style
-		my_button = pig.create_custom_button("hello",(-0.5,0,-0.5),print,["hello there",])#,style=my_style)
-		
-		my_button.setScale(0.4)
-		my_button.textnodepath.setScale(0.4)
+		my_button = pig.AmountSetter()
+        
 		
 def main():
 	W = Wrapper()

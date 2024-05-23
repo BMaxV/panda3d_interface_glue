@@ -1,4 +1,5 @@
 ﻿import random
+import copy
 
 #import panda3d.core import *
 from direct.gui.DirectButton import DirectButton
@@ -20,8 +21,6 @@ from panda3d.core import TextNode
 from panda3d.core import *
 from direct.gui.DirectGui import *
 from direct.showbase import ShowBase
-
-
 
 #from panda3d.core import render2d
 #from direct.gui.DirectGui import render2d
@@ -130,24 +129,19 @@ def flip_yz(vector):
     return new_vector
 
 def draw_2d_line(p1,p2,color=(255,255,0)):
-    
-    
-    #prepare new interface object container
-    tformat=GeomVertexFormat.getV3t2()
-    #this is the format we'll be using.
+    # prepare new interface object container
+    tformat = GeomVertexFormat.getV3t2()
+    # this is the format we'll be using.
     vdata = GeomVertexData('convexPoly', tformat, Geom.UHStatic)
 
     #these are access shortcuts
     vertex = GeomVertexWriter(vdata, 'vertex')
     uv = GeomVertexWriter(vdata, "texcoord")
-    vdata.setNumRows(2)# define  number of points.
+    vdata.setNumRows(2) # define  number of points.
     poly = Geom(vdata)
-    ci=0
+    ci = 0
 
-    #p1=[-0.8, 0, 0.5]
-    #p2=[-0.5, 0, 0.5]
-        
-    verts=[p1,p2]
+    verts = [p1,p2]
     
     for p in verts:
         #color_t=(255,255,0)
@@ -163,28 +157,31 @@ def draw_2d_line(p1,p2,color=(255,255,0)):
     
     snode = GeomNode('Object1')
     snode.addGeom(poly)
-    path=NodePath(snode)
+    path = NodePath(snode)
     path.reparent_to(render2d)
-    #text_obs.append(path)
+    
     return path
-    #this should do ti completely.
-
+    
 def display_active_cells(current_active_cells,text_obs,game_d):
-    #engine calculates pos 2d. that's not passed on right now.
-    #that's why this isn't working.
+    """
+    this function in general is a bit old, I don't think I would do it
+    like this again. I still think pointing to the 3d->2d position of things
+    for UI purposes makes sense, but in exactly this way.
+    """
+    # engine calculates pos 2d. that's not passed on right now.
+    # that's why this isn't working.
     
     if "World" in game_d:
         if "active cells" in game_d["World"]:
-            #if game_d["World"]["active_cells"]!=current_active_cells:
-            current_active_cells=game_d["World"]["active cells"][3]
+            current_active_cells = game_d["World"]["active cells"][3]
             
             
             for n in text_obs:
                 n.removeNode()
-            text_obs=[]
+            text_obs = []
             
             #prepare new interface object container
-            tformat=GeomVertexFormat.getV3t2()
+            tformat = GeomVertexFormat.getV3t2()
             #this is the format we'll be using.
             vdata = GeomVertexData('convexPoly', tformat, Geom.UHStatic)
 
@@ -195,7 +192,7 @@ def display_active_cells(current_active_cells,text_obs,game_d):
             poly = Geom(vdata)
             ci=0
                         
-            target_list=[]
+            target_list = []
             for c in current_active_cells:
                 #text_pos=[-0.8, 0, 0.5-0.1*c_p]
                 if c.pos_2d!=None:
@@ -203,23 +200,23 @@ def display_active_cells(current_active_cells,text_obs,game_d):
                     for i in c.pos_2d:
                         l.append(i)
                     
-                    pos_2d=c.pos_2d
-                    pos_2d[2]=pos_2d[1]
-                    pos_2d[1]=0
+                    pos_2d = c.pos_2d
+                    pos_2d[2] = pos_2d[1]
+                    pos_2d[1] = 0
                     
-                    target=pos_2d
+                    target = pos_2d
                     
                     target_list.append([target,c])
             
             target_list.sort(key=lambda x:x[0][2],reverse=True)
             
-            c_p=0
+            c_p = 0
             for t in target_list:
                 
-                text_pos=[-0.8, 0, 0.5-0.1*c_p]
+                text_pos = [-0.8, 0, 0.5-0.1*c_p]
                 
-                target=t[0]
-                c=t[1]
+                target = t[0]
+                c = t[1]
                     
                 verts=[text_pos,target]
                 
@@ -232,17 +229,17 @@ def display_active_cells(current_active_cells,text_obs,game_d):
                 tris.addVertices(ci,ci+1)
                 tris.closePrimitive()
                 poly.addPrimitive(tris)
-                ci+=2
+                ci += 2
                     
                 string=str(c.center[0])[0:4]+","+str(c.center[1])[0:4]+" "+str(c.face_id)
                 text=create_textline(string,tuple(text_pos))
                 
                 text_obs.append(text)
-                c_p+=1
+                c_p += 1
             
             snode = GeomNode('Object1')
             snode.addGeom(poly)
-            path=NodePath(snode)
+            path = NodePath(snode)
             path.reparent_to(render2d)
             text_obs.append(path)
         
@@ -297,6 +294,7 @@ def build_hierarchy_interface(layers=None):
     
     
     DC=drag_main.Drag_Container()
+    DC.pixels=False
     #now to define some "slots"...
     #pos in pixel, left to right
     x_base=50
@@ -326,16 +324,15 @@ def build_hierarchy_interface(layers=None):
             
             #I want the position centered.
             #but that's something I can math later.
-            drag_type="person"
-            DC.grid[location_key]=drag_main.construct_frame(**{"pos":(x_base+pc*70,70+70*c),"color":drag_main.colors["light_red"]},drag_drop_type=drag_type,key="person")
+            drag_type = "person"
+            DC.grid[location_key] = drag_main.construct_frame(**{"pos":(x_base+pc*70,70+70*c),"color":drag_main.colors["light_red"]},drag_drop_type=drag_type,key="person")
             
-            D=drag_main.construct_draggable(DC,drag_type=drag_type,#,
-                            rel_col=drag_main.colors["red"])
-                            #represented_item=item)
+            D = drag_main.construct_draggable(DC,drag_type=drag_type,#,
+                            rel_col=drag_main.colors["red"],pixels=False)
             
-            drag_items=DC.drag_items
+            drag_items = DC.drag_items
             
-            drag_main.lock(D,DC.grid,drag_items,location_key)#position
+            drag_main.lock(D,DC.grid,drag_items,location_key)
             pc+=1
         c+=1
     print("done")
@@ -561,19 +558,16 @@ def build_buildmenu(options):
 
 
 def create_contents(the_dict,key_string_prefix,DC,grid,color=drag_main.colors["red"]):
+    
+    config_d = {"drag_type":None,
+                "rel_col":color,
+                "pixels":False}
+    
     for item in the_dict:
-        #ya don't do this, find any open slot.
-        #key="key_string_prefix"+str(item)
-        #dis
-        D=drag_main.construct_draggable(DC,
-                            drag_type=None,
-                            represented_item=item,
-                            rel_col=color
-                            )
-        
-        drag_items=DC.drag_items
-        key=drag_main.next_free_key(grid,DC.drag_items)
-        
+        config_d["represented_item"] = item
+        D = drag_main.construct_draggable(DC,**config_d)
+        drag_items = DC.drag_items
+        key = drag_main.next_free_key(grid,DC.drag_items)
         drag_main.lock(D,grid,drag_items,key)
         
 
@@ -791,10 +785,12 @@ def create_custom_button(mytext,position,function,arguments,style=None):
     # default styling for the frame
     
     default_style = {"pos":position,
-                    "scale":0.05,
+                    "scale":0.5,
                     "frameSize":(-4.5,4.5,-0.75,0.75),
                     "state": DGG.NORMAL,
-                    "frameColor": (0.1,0.1,0.1,1),}
+                    "frameColor": (0.1,0.1,0.1,0.5),
+                    
+                    }
     
     # if there is supposed to be a background... 
     # let me see how I did that with the frame wrap.
@@ -802,20 +798,26 @@ def create_custom_button(mytext,position,function,arguments,style=None):
     active_style = dict(default_style)
     active_style.update(style)
     
+    #print("custom button style",active_style)
+    
     mybutton = DirectFrame(**active_style)
     mybutton.bind(DGG.B1PRESS,function,arguments)
     mybutton.setTransparency(1)
-    
+    mybutton.setScale(default_style["scale"])
     
     
     textNodePath = aspect2d.attachNewNode(text_node)
-    textNodePath.setScale(default_style["scale"])
-    textNodePath.setPos(default_style["pos"])
+    textNodePath.setScale(1)
+    #textNodePath.setPos(default_style["pos"])
     
     mybutton.setPos(default_style["pos"])
     
     mybutton.textnodepath=textNodePath
     mybutton.textnode=text_node
+    #mybutton.setBin("gui-popup", 1)
+    #textNodePath.setBin("gui-popup", 0)
+    textNodePath.reparentTo(mybutton)
+    textNodePath.setPos(0,0,0)
     
     return mybutton
     
@@ -871,15 +873,14 @@ def create_onscreentext(text="default",pos=(0.5,-0.5),align="right",scale=0.07):
 
             
 class CyclingList:
-    def __init__(self,variable_name,values,base_position):
+    def __init__(self,variable_name,values,base_position,current_index=0):
        
         self.variable_name = variable_name
         self.values = values # if "numbers" change behavior?
-        self.current_index = 0
+        self.current_index = current_index
         self.base_position = base_position
-        self.build(base_position)
-        
         self.elements = []
+        self.build(base_position)
     
     def cycle(self,direction,*args):
         if direction=="up":
@@ -894,10 +895,17 @@ class CyclingList:
         
         self.clean()
         self.build(self.base_position)
-        
+    
+    def adjust_to_current_index(self,new_current_index):
+        self.current_index = new_current_index
+        self.clean()
+        self.build(self.base_position)
+    
     def clean(self):
         for x in self.elements:
-            x.removeNode()
+            if "removeNode" in dir(x):
+                x.removeNode()
+        self.elements = []
     
     def get_value(self):
         return self.values[self.current_index]
@@ -906,7 +914,7 @@ class CyclingList:
         
         scale = (0.05, 0.05, 0.05)
         x,y,z=base_position
-        display_variable_name = create_textline(
+        nodepath = create_textline(
             self.variable_name , (x-0.3, 0.0, z))
         
         variable_value = self.values[self.current_index]
@@ -915,7 +923,7 @@ class CyclingList:
         # or accept e.g. number values.
         # hm. I think I already built both.
         
-        display_variable_value = create_textline(
+        nodepath2 = create_textline(
             variable_value, (x, 0.0, z))
         
         up_button = create_button(
@@ -927,15 +935,16 @@ class CyclingList:
             self.cycle, ("down",),frame_size = (-1.5,1.5,-0.75,0.75)
             )
         
-        self.elements=[
-        display_variable_name,
-        display_variable_value,
+        self.elements+=[
+        nodepath,
+        nodepath2,
         up_button,
         down_button]
     
     def removeNode(self):
         for x in self.elements:
             x.removeNode()
+        self.elements=[]
 
 
 class Framehistogram:
@@ -946,7 +955,7 @@ class Framehistogram:
         self.elements = []
         self.barnumber = barnumber
         self.value_range = value_range
-        self.moving=moving
+        self.moving = moving
         
     def add_value(self,value):
         
@@ -971,8 +980,8 @@ class Framehistogram:
         
     def move_bars(self):
         for x in self.elements:
-            pos=x.getPos()
-            xdiff=self.size[0]/self.barnumber
+            pos = x.getPos()
+            xdiff = self.size[0]/self.barnumber
             npos = (pos[0]-xdiff,pos[1],pos[2])
             x.setPos(npos)
 
@@ -992,7 +1001,10 @@ class EntrySearch:
     def __init__(self,values,pos=(0,0,0.3),scale=0.07,):
         self.values=values
         self.mysearch_input=DirectEntry(pos=pos,scale=scale,focus=0)
-        
+    
+    def destroy(self):
+        self.mysearch_input.destroy()
+    
     def removeNode(self):
         self.mysearch_input.removeNode()
         
@@ -1008,6 +1020,59 @@ class EntrySearch:
         
         return x
 
+class AmountSetter:
+    def __init__(self,base_position=(0,0,0),value=1,diff=1,scale=0.05):
+        
+        self.round_index = None
+        self.my_value = value
+        self.diff = diff
+        self.elements = []
+        
+        text_pos = (base_position[0]-0.3,base_position[1],base_position[2])
+        self.my_text= create_textline(f"{self.my_value}", text_pos)
+        
+        up_pos = list(base_position)
+        up_pos[0] += 0.1
+        up_pos[2] += 0.05
+        up = create_button("+", up_pos, scale, 
+            self.up, [],frame_size = (-1.5,1.5,-0.75,0.75))
+        
+        down_pos = list(base_position)
+        down_pos[0] += 0.1
+        down_pos[2] -= 0.05
+        down = create_button("-", down_pos, scale,
+             self.down, [],frame_size = (-1.5,1.5,-0.75,0.75))
+             
+        self.elements = [self.my_text, up, down]
+    
+    def destroy(self):
+        for x in self.elements:
+            x.removeNode()
+    
+    def up(self,*args):
+        self.my_value += self.diff
+        if self.round_index != None:
+            value = round(self.my_value,self.round_index)
+        else:
+            value = self.my_value
+        self.my_text.node().setText(f"{value}")
+    
+    def down(self,*args):
+        self.my_value -= self.diff
+        if self.round_index != None:
+            value = round(self.my_value,self.round_index)
+        else:
+            value = self.my_value
+        self.my_text.node().setText(f"{value}")
+    
+    def get_value(self):
+        return self.my_value
+        
+    def removeNode(self):
+        for x in self.elements:
+            x.removeNode()
+
+
 def amount_setter(big_container,big_container_cycle_function,display_amount,base_position,scale,cycle_args_up=("amount", "main", "up"),cycle_args_down=("amount", "main", "down")):
     """ok, so the problem with this thing, is that it makes some assumptions about 
     where it's used.
@@ -1018,24 +1083,25 @@ def amount_setter(big_container,big_container_cycle_function,display_amount,base
     in here..
     """
     
-    
+    text_pos = (base_position[0]-0.3,base_position[1],base_position[2])
     amount_ob = create_textline(
-        "amount:"+str(display_amount), base_position)
-        
-    up_pos=list(base_position)
-    up_pos[0]+=0.1
-    up_pos[2]+=0.05
+        "amount:"+str(display_amount), text_pos)
+    
+    up_pos = list(base_position)
+    up_pos[0] += 0.1
+    up_pos[2] += 0.05
     a_up = create_button(
         "+", up_pos, scale, 
         big_container_cycle_function, cycle_args_up,frame_size = (-1.5,1.5,-0.75,0.75))
     
-    down_pos=list(base_position)
-    down_pos[0]+=0.1
-    down_pos[2]-=0.05
+    down_pos = list(base_position)
+    down_pos[0] += 0.1
+    down_pos[2] -= 0.05
     a_down = create_button(
         "-", down_pos, scale,
          big_container_cycle_function, cycle_args_down,frame_size = (-1.5,1.5,-0.75,0.75))
     elements = [amount_ob, a_up, a_down]
+    
     return  elements
 
 
@@ -1089,7 +1155,10 @@ def create_style_collection():
     return my_style_collection
 
 def create_textline(text,position,color=(0.8,0.8,0.8,1),outline_color=(0,0,0,1),outline_geom=(0.1,0.1),make_card=True,card_margin=(0.1,0.1,0.1,0.1),card_color=(0.2,0.2,0.2,0.5),panda_font=None):
-    """I kind of want to accept style as a dict, and define keyword args"""
+    """I kind of want to accept style as a dict, and define keyword args
+    returns a nodepath.
+    "use .node() to get the actual TextNode under that NodePath"
+    """
     textnode = TextNode(text)
     
     textnode.set_text(text)
@@ -1098,15 +1167,18 @@ def create_textline(text,position,color=(0.8,0.8,0.8,1),outline_color=(0,0,0,1),
     textnode.setCardAsMargin(*card_margin)
     textnode.setCardColor(*card_color)
     textnode.setCardDecal(True)
-    if panda_font == None:
-        panda_font = textnode.getFont()
+    
     if panda_font!=None:
+        # create a copy to allow for custom outlines on all objects,
+        # if I want them.
+        panda_font = copy.copy(panda_font)
+        panda_font.clear()
         panda_font.setOutline(outline_color,*outline_geom)
         textnode.setFont(panda_font)
     textNodePath = aspect2d.attachNewNode(textnode)
     textNodePath.setScale(0.05)
     textNodePath.setPos(position)
-    return textnode, textNodePath
+    return textNodePath
 
 def create_charge_bar(position=(0.0,0.0,0.5)):
     #like a tooltip, but scale it?

@@ -44,7 +44,7 @@ class MyDraggableDemo:
 
             F = drag_main.container_surface(
                 pos=pos, size=size, pixels=pixels)
-
+            F.sorted_elements = []
             drag_main.bind_single_events(
                 F, self.DC.hover_in, self.DC.hover_out)
             frames.append(F)
