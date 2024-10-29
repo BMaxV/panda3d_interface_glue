@@ -1298,6 +1298,28 @@ def key_event_listening(base):
     #self.accept("%s-up" % (w_button), self.stop_moving_forward)
     
     return raw_key,key_name
+
+
+def make_labeled_slider(value_range_tuple, initial_value, label, pos, scale, f, args=None):
+    """get the value like this:
     
+    slider["value"]
+    
+    peak ugly, I know. Don't ask. It's DirectGUI
+    """
+    if args == None:
+        args = []
+    slider = DirectSlider(range=value_range_tuple, value=initial_value, pageSize=2, command=f,extraArgs=args )
+    
+    slider.setScale(scale)
+    slider.setPos(*pos)
+    tp0 = pos[0]
+    tp0 -= 0.4
+    tp = (tp0,0,pos[2])
+    
+    text_line = create_textline(label,tp)
+    
+    return slider, text_line
+
 if __name__=="__main__":
     a=1
